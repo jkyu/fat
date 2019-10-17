@@ -1,0 +1,6 @@
+Run scripts in this order:
+1. compute-populations.py to get the data that will generate the population decay plot with bootstrapped error bars.
+2. compute-fit-error.py to get an error on the exponential fit. 
+3. plot-populations.py
+
+plot-singles.py is optional, but maybe useful if you want a closer look at the population dynamics. 

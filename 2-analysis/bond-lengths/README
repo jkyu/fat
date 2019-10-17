@@ -1,0 +1,8 @@
+compute-blas.py places the BLA coordinate on a uniform grid for each TBF
+and averages them over all ICs.
+The data is saved to the ./data/bla.pickle file
+
+plot-bla.py takes this data from bla.pickle and makes the figure for
+figureS4. This is the early time average of the BLA mode over all 
+AIMS simulations to show the BLA relaxation early in the excited
+state dynamics. 

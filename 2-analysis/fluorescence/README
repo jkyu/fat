@@ -1,0 +1,29 @@
+Fluorescence computation for the AIMS simulation of bR.
+
+Reference experimental data for absorption and fluorescence can be found in ./expt-data
+This data are from 1988 Dobler and 2005 Schmidt. These are traced from plots in those papers.
+
+Data for all of the fluorescence analyses are computed by compute-fluorescence.py
+This script is heavily commented, so look there for additional details.
+The raw 2D fluorescence data is dumped into the ./data folder.
+
+For figure 3 of the main paper, (1) the time-/energy-resolved 2D fluorescence spectrum
+after convolution and (2) the time-resolved 1D fluorescence slices at 800 nm and 650 nm
+are plotted.
+
+(1) The error of the 2D fluorescence spectrum due to sampling is computed in
+compute-fl-error.py. This is required for error bars on the 1D time-resolved lineouts.
+
+(2) The time-resolved energy-specific lineouts are plotted by plot-time-resolved.py
+This requires data from ./data/fluorescence.pickle and the error data from 
+./data/fl-error.pickle
+Also requires the experimental reference data from ./expt-data/
+Bootstrapping error bars on the time slices are computed in compute-error.py, 
+which dumps the fl-error.pickle file
+The energy shift for the fluorescence is also computed here by comparing the peaks
+of the steady state fluorescence. 
+
+(3) Finally, plot the 2D spectrum with plot-2D-fluorescence.py
+
+This does require the computed energy shift between experiment and theory, which is in
+note (3)
