@@ -8,7 +8,7 @@ computation here. It checks how much population belongs to each category. '''
 
 def compute_qy():
 
-    data = pickle.load(open('../dihedral-angles/data/dihedrals.pickle', 'rb'))
+    data = pickle.load(open('../dihedrals/data/dihedrals.pickle', 'rb'))
     cis_keys = data['cis_keys']
     trans_keys = data['trans_keys']
     ex_keys = data['ex_keys']
