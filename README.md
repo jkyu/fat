@@ -12,3 +12,6 @@ Required python packages:
 - SciPy
 - MDTraj
 - MatPlotLib
+
+TODO:
+- Toy examples for how this thing works. 
