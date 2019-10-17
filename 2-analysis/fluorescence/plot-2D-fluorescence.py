@@ -3,6 +3,8 @@ import os
 import math
 import sys
 import pickle
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as cl
 '''

@@ -1,4 +1,5 @@
 import sys
+import os
 import numpy as np
 import pickle
 import mdtraj as md
@@ -53,6 +54,9 @@ def plot():
 
     # fig.text(0.5, 0.03, 'Time [fs]', va='center', ha='center', fontsize=labelsize)
     fig.align_ylabels()
+
+    if not os.path.isdir('./figures'):
+        os.mkdir('./figures')
 
     plt.savefig('./figures/avg-hbonds.pdf')
     plt.savefig('./figures/avg-hbonds.png')

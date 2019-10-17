@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from scipy.optimize import curve_fit
 from scipy.optimize import leastsq
 import pickle
@@ -101,6 +102,7 @@ def get_populations(ics, tgrid, datadir):
         gs_error[k] = std
 
     data2 = {}
+    data2['ics'] = ics
     data2['tgrid'] = tgrid
     data2['ex_populations'] = avg_ex_pops
     data2['ex_error'] = ex_error

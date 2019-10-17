@@ -1,6 +1,9 @@
 import numpy as np
+import os
 import mdtraj as md
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import rcParams
 import pickle
 import sys

@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from scipy.optimize import curve_fit
 from scipy.optimize import leastsq
 import pickle
@@ -19,9 +20,9 @@ overall excited state decay time.
 def exp_func(x, A, b, c):
     return A * np.exp(-1./b * x) + c
 
-tgrid = np.arange(0, 1500, 1)
-ics = [x for x in range(1, 33) if x not in [6,17] ]
 pop_data = pickle.load(open('./data/populations.pickle', 'rb'))
+tgrid = pop_data['tgrid']
+ics = pop_data['ics']
 
 interp_populations = pop_data['all_populations']
 ex_pop = pop_data['ex_populations']
@@ -52,5 +53,5 @@ plt.ylabel('Excited State Population', fontsize=labelsize)
 
 if not os.path.isdir('./figures/'):
     os.mkdir('./figures/')
-plt.savefig('single/singles.png')
+plt.savefig('figures/singles.png')
 

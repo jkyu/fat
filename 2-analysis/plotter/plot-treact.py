@@ -1,4 +1,7 @@
 import sys
+import os
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 from scipy import interpolate
@@ -224,7 +227,7 @@ def treact(en_data, angle_data, bla_data, offset=78):
 
 rcParams.update({'figure.autolayout': True})
 en_data = pickle.load(open('../energies/data/energies.pickle', 'rb'))
-angle_data = pickle.load(open('../dihedral-angles/data/dihedrals.pickle', 'rb'))
+angle_data = pickle.load(open('../dihedrals/data/dihedrals.pickle', 'rb'))
 bla_data = pickle.load(open('../bond-lengths/data/bla.pickle', 'rb'))
 
 treact(en_data, angle_data, bla_data)

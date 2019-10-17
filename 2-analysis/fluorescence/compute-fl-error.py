@@ -28,6 +28,7 @@ def get_grid(tbf_data, ic):
     return ic_grid
 
 data = pickle.load(open('./data/fluorescence.pickle', 'rb'))
+ics = data['ics']
 tbf_data = data['tbf_fluorescence']
 keys = [x for x in tbf_data.keys()]
 

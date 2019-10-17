@@ -1,8 +1,10 @@
 import numpy as np
+import os
 import pickle
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import matplotlib
+matplotlib.use('Agg')
 from scipy.optimize import curve_fit
 
 def exp_func(x, A, b, c):

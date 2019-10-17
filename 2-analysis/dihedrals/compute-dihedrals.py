@@ -53,7 +53,7 @@ def compute_dihedrals(ics, tgrid, datadir, dihedral_index, do_avg=False):
     '''
     print('Loading trajectories for IC TBFs and computing dihedral angles.')
 
-    dihedral_names = [x for x in dihedral_list.keys()]
+    dihedral_names = [x for x in dihedral_index.keys()]
     dihedral_list = [ dihedral_index[x] for x in dihedral_names ] 
 
     gs_keys = []
@@ -216,5 +216,6 @@ dihedral_index['C14-C15=NZ-CE']   = [3337, 3335, 3333, 3330]
 # dihedral_index['CC13-C13-NZ-HNZ'] = [3340, 3339, 3334, 3333]
 
 ics = [x for x in range(1, 33) if x not in [6,17] ]
+tgrid = np.arange(0, 1500, 5)
 datadir = '../../1-collect-data/data/'
 compute_dihedrals(ics, tgrid, datadir, dihedral_index, do_avg=False)

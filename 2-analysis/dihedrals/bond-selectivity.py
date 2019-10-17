@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import pickle
 import mdtraj as md
 import matplotlib.pyplot as plt

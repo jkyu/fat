@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import sys
 from scipy.optimize import curve_fit
 import pickle
@@ -172,7 +173,7 @@ def run():
     fl_1D_max = find_max(fl_1D, x_fl)
     fl_shift = fl_1D_max[1] - expt_fl_max[1]
     print('Energy Shift = %f eV' %fl_shift)
-    np.savetxt('fl_shift.txt', fl_shift)
+    np.savetxt('./data/fl_shift.txt', np.array([fl_shift]))
 
     '''
     Plot 1D for time resolved fluorescence. Take slices of the 2D fluorescence

@@ -94,6 +94,7 @@ def compute_fluorescence(initconds, datadir):
     fl_grid = fl_grid / np.max(fl_grid)
 
     data = {}
+    data['ics'] = ics
     data['tgrid'] = t_grid
     data['egrid'] = en_grid
     data['wgrid'] = wl_grid

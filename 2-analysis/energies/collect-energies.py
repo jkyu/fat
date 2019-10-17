@@ -86,5 +86,5 @@ def get_energy(ics, tgrid, datadir):
 
 ics = [ x for x in range(1,33) if x not in [6,17] ]
 tgrid = np.arange(0, 1500, 5)
-datadir = '../../1-collect-data/data/')
+datadir = '../../1-collect-data/data/'
 get_energy(ics, tgrid, datadir)

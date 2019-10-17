@@ -47,7 +47,7 @@ def compute_hbonds(ics, tgrid, datadir, do_avg=False):
     trans TBFs. Ideally, you'd just do the sorting elsewhere or
     do it here so that this could be standalone. 
     '''
-    dihe_data = pickle.load(open('../dihedral-angles/data/dihedrals.pickle', 'rb'))
+    dihe_data = pickle.load(open('../dihedrals/data/dihedrals.pickle', 'rb'))
     cis_keys = dihe_data['cis_keys']
     trans_keys = dihe_data['trans_keys']
     print(len(cis_keys))
@@ -162,5 +162,5 @@ def compute_hbonds(ics, tgrid, datadir, do_avg=False):
 
 tgrid = np.arange(0, 1500, 5)
 ics = [x for x in range(1, 33) if x not in [6,17] ]
-datadir = '../../1-collect-data/data/')
+datadir = '../../1-collect-data/data/'
 compute_hbonds(ics, tgrid, datadir, do_avg=True)

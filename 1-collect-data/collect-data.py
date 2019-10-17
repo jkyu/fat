@@ -207,6 +207,6 @@ def collect_tbfs(initconds, dirname, sysname):
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 ics = [x for x in range(1,33)]
-fmsdir = '/home/jkyu/data/br/5-aims/2-FMS/FMS-' %ic
+fmsdir = '/home/jkyu/data/br/5-aims/2-FMS/FMS-'
 sysname = 'br' # this is the name of the prmtop file
 collect_tbfs(ics, fmsdir, sysname)

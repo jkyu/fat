@@ -16,12 +16,8 @@ bootstrapping -- 5000 samplings of the ICs are computed and then averaged.
 def exp_func(x, A, b, c):
     return A * np.exp(-1./b * x) + c
 
-ics = [x for x in range(1, 33) if x not in [6,17] ] 
-# # 6, 17 were dead AIMS trajectories due to REKS convergence, so they are not included
-# ics = [x for x in range(1, 33) if x not in [6,17,13,23,24,31] ] 
-# # if you want to check what this looks like if the non-spawning ICs are excluded
-
 pop_data = pickle.load(open('./data/populations.pickle', 'rb'))
+ics = pop_data['ics']
 tgrid = np.arange(0, 1500, 1)
 interp_populations = pop_data['all_populations']
 ex_keys = [x for x in interp_populations.keys() if x.split('-')[-1]=='01']

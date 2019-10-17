@@ -39,7 +39,7 @@ def interpolate(grid, tsteps, data):
 
     return interp_data
 
-def compute_bla(ics, tgrid, datadir, bond_index):
+def compute_bla(ics, tgrid, datadir, single_index, double_index):
     '''
     Load the fat data file and collect the spawn information.
     Gather the value of the dihedral angles from the trajectories.
@@ -54,13 +54,13 @@ def compute_bla(ics, tgrid, datadir, bond_index):
     gs_keys = []
     ex_keys = []
 
-    single_names = ['C8-C9', 'C10-C11', 'C12-C13', 'C14-C15']
+    single_names = [x for x in single_index.keys()]
     single_list  = [ single_index[x] for x in single_names ]
-    double_names = ['C9=C10', 'C11=C12', 'C13=C14', 'C15=NZ']
+    double_names = [x for x in double_index.keys()]
     double_list  = [ double_index[x] for x in double_names ]
 
     for ic in ics:
-        data = pickle.load(open('../../../3-collect-data/data/%02d.pickle' %ic, 'rb'))
+        data = pickle.load(open(datadir + ('/%02d.pickle' %ic), 'rb'))
         for tbf_key in data.keys():
 
             print(tbf_key)
@@ -178,5 +178,5 @@ double_index['C15=NZ']  = [3335, 3333]
 
 ics = [x for x in range(1,33) if x not in [6,17]]
 tgrid = np.arange(0, 1500, 5)
-datadir = '../1-collect-data/data/'
+datadir = '../../1-collect-data/data/'
 compute_bla(ics, tgrid, datadir, single_index, double_index)
