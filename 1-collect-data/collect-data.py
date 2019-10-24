@@ -53,7 +53,7 @@ def get_energies(enfile):
     energies = {}
     with open(enfile, 'rb') as f:
         header = f.readline() # header line
-        nstate = int(len(header) - 2)
+        nstate = int(len(header.split()) - 2)
         for i in range(0, nstate):
             energies['s%d' %i] = []
         for line in f:
