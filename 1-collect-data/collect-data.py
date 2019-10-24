@@ -16,6 +16,10 @@ def get_populations(popfile):
     Parse Amp.x file to pull out population information over time
     for the trajectory. For the population information, we record
     the amplitude norm (in the second column).
+    We do this from Amp.x instead of N.dat because the coefficient
+    for each TBF at each time step matters for computing observables.
+    For population decay, you can just use N.dat, but this is more
+    general. 
     '''
     time_steps = []
     amplitudes = []
@@ -38,35 +42,34 @@ def get_energies(enfile):
     Parse PotEn.x file to pull out electronic energies over time
     computed at the center of the TBF. We record the electronic 
     energy on S0 and on S1 for the location of the TBF at each time 
-    step. Time is in column 1, S0 energy is in column 2, S1 energy
-    is in column 3 and column 4 is the total energy (labeled Eclass).
-    The total energy should stay constant throughout the trajectory.
+    step. Time is in column 1, S0 energy is in column 2, S.n energy
+    where n = state number (1-indexed) are the next few columns. 
+    The final column is the total classical energy. The classical 
+    energy should stay constant throughout the FMS simulation. 
     These energies are reported in atomic units. 
     '''
     time_steps  = []
-    s0_energies = []
-    s1_energies = []
-    e_total = []
+    e_class = []
     energies = {}
     with open(enfile, 'rb') as f:
-        _ = f.readline() # header line
+        header = f.readline() # header line
+        nstate = int(len(header) - 2)
+        for i in range(0, nstate):
+            energies['s%d' %i] = []
         for line in f:
             a = line.split()
-            time_step = float(a[0]) * 0.024188425
-            s0_energy = float(a[1])
-            s1_energy = float(a[2])
-            etot = float(a[3])
-            time_steps.append(time_step)
-            s0_energies.append(s0_energy)
-            s1_energies.append(s1_energy)
-            e_total.append(etot)
-    energies['s0'] = np.array(s0_energies)
-    energies['s1'] = np.array(s1_energies)
-    energies['total'] = np.array(e_total)
-
+            time_steps.append(float(a[0]) * 0.024188425)
+            e_class.append(float(a[-1]))
+            for i in range(0, nstate):
+                si_energy = float(a[i+1])
+                energies['s%d' %i].append(float(a[i+1]))
+    data = {}
+    for key in energies.keys():
+        data[key] = np.array(energies[key])
+    data['total'] = np.array(e_class)
     time_steps = np.array(time_steps)
 
-    return time_steps, energies
+    return time_steps, data
 
 def get_transition_dipoles(tdipfile):
     '''
@@ -74,13 +77,15 @@ def get_transition_dipoles(tdipfile):
     S0 and S1 for each time step. We record the time step
     and the magnitude of the transition dipole. The time step
     is in the first column and the magnitude of the transition
-    dipole is in the second column. Columns 3-5 are for the xyz
-    components of the transition dipole. Here, we only need the 
-    magnitude. The TDip.x file reports transition dipoles between
-    the ground state and the excited states labeled Mag.x in the 
-    header, with x indicating the excited state. So Mag.2 indicates
-    the magnitude of the transition dipole between states 1 and 2, 
-    which are S0 and S1 respectively.
+    dipole is in the second column. Columns 2.x, 2.y, 2.z are for 
+    the xyz components of the transition dipole. Here, we only need 
+    the magnitude. The TDip.x file reports transition dipoles between
+    the ground state and the excited states labeled Mag.n in the 
+    header, with n indicating the excited state (1-indexed). 
+    So Mag.2 indicates the magnitude of the transition dipole between 
+    states 1 and 2, which are S0 and S1 respectively.
+    It should be that only S1 matters when computing fluorescence,
+    so only Mag.2 is collected. 
     '''
     time_steps = []
     transition_dipoles = []
@@ -138,9 +143,9 @@ def get_positions(xyzfile, prmtop):
     trajectory = md.load_xyz(xyzfile, prmtop)
     return trajectory
 
-def get_tbf_data(dirname, ic, tbf_id, sys_name):
+def get_tbf_data(dirname, ic, tbf_id, prmtop):
 
-    prmtop   = dirname + '%s.prmtop' % sys_name
+    # prmtop   = dirname + '%s.prmtop' % sys_name
     enfile   = dirname + 'PotEn.%d' %tbf_id
     xyzfile  = dirname + 'positions.%d.xyz' %tbf_id
     popfile  = dirname + 'Amp.%d' %tbf_id
@@ -162,23 +167,23 @@ def get_tbf_data(dirname, ic, tbf_id, sys_name):
 
     return tbf_data
 
-def collect_tbfs(initconds, dirname, sysname):
+def collect_tbfs(initconds, dirname, prmtop):
     '''
     Gather TBFs in MDTraj and dump to disk to make subsequent analyses faster. 
     '''
     for ic in initconds:
 
         data = {}
-        dirname = fmsdir + ('%d/' %ic)
+        dirname = fmsdir + ('%04d/' %ic)
 
         '''
         Parent TBF
         '''
         tbf_id = 1
-        print('%02d-%02d' %(ic, tbf_id))
+        print('%04d-%04d' %(ic, tbf_id))
 
-        tbf_data = get_tbf_data(dirname, ic, tbf_id, sysname)
-        key = '%02d-%02d' %(ic, tbf_id)
+        tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop)
+        key = '%04d-%04d' %(ic, tbf_id)
         data[key] = tbf_data
         print('Finish')
 
@@ -193,20 +198,21 @@ def collect_tbfs(initconds, dirname, sysname):
                 if len(spawn) > 0:
 
                     tbf_id = spawn['spawn_id']
-                    print('%02d-%02d' %(ic, tbf_id))
+                    print('%04d-%04d' %(ic, tbf_id))
 
-                    tbf_data = get_tbf_data(dirname, ic, tbf_id, sysname)
-                    key = '%02d-%02d' %(ic, tbf_id)
+                    tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop)
+                    key = '%04d-%04d' %(ic, tbf_id)
                     data[key] = tbf_data
                     print('Finish')
 
         if not os.path.isdir('./data/'):
             os.mkdir('./data/')
 
-        with open('./data/%02d.pickle' %(ic), 'wb') as handle:
+        with open('./data/%04d.pickle' %(ic), 'wb') as handle:
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-ics = [x for x in range(1,33)]
-fmsdir = '/home/jkyu/data/br/5-aims/2-FMS/FMS-'
-sysname = 'br' # this is the name of the prmtop file
+ics = [x for x in range(11,50)]
+# ics = [13]
+fmsdir = '../../'
+sysname = '../../ab.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
 collect_tbfs(ics, fmsdir, sysname)
