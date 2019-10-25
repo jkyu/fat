@@ -216,6 +216,12 @@ def collect_tbfs(initconds, dirname, prmtop, initstate):
         with open('./data/%04d.pickle' %(ic), 'wb') as handle:
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+    simulation_data = {}
+    simulation_data['ics'] = initconds
+    simulation_data['nstates'] = tbf_data['nstates']
+    with open('./data/fmsinfo.pickle', 'wb') as handle:
+        pickle.dump(simulation_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 ics = [x for x in range(11,50)]
 # ics = [11]
 fmsdir = '../../'
