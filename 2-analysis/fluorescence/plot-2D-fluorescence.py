@@ -15,7 +15,7 @@ This uses a fluorescence shift that should be computed in the
 output of plot-time-resolved.py and saved to ./data/fl_shift.txt
 '''
 
-def plot_fluorescence(fl_data, fl_shift):
+def plot_fluorescence(fl_data, fl_shift, lineout=False):
     '''
     Here, we think about time as x and energy as y. It turns out that in
     the fluorescence 2D array, each row corresponds to a specific time 
@@ -29,9 +29,6 @@ def plot_fluorescence(fl_data, fl_shift):
     tgrid = fl_data['tgrid']
     ngrid = len(tgrid)
     fl    = fl_data['fluorescence']
-
-    # egrid = egrid - fl_shift
-    # wgrid = np.array([1240./x for x in egrid])
 
     t0 = np.argmin(np.abs(0 - tgrid))
     xticks = np.arange(t0, ngrid, ngrid//5)
@@ -60,11 +57,12 @@ def plot_fluorescence(fl_data, fl_shift):
 
     # Plot line outs -- if you don't have single wavelength signal to highlight,
     # you can comment this block out
-    wl650 = np.argmin(np.abs(egrid - (1240./650. + fl_shift)))
-    wl800 = np.argmin(np.abs(egrid - (1240./800. + fl_shift)))
-    print(wgrid[wl650], wgrid[wl800])
-    plt.plot(np.arange(ngrid), [wl650]*len(tgrid), linewidth=2.0, linestyle='-', color='silver')
-    plt.plot(np.arange(ngrid), [wl800]*len(tgrid), linewidth=2.0, linestyle='-', color='silver')
+    if lineout:
+        wl650 = np.argmin(np.abs(egrid - (1240./650. + fl_shift)))
+        wl800 = np.argmin(np.abs(egrid - (1240./800. + fl_shift)))
+        print(wgrid[wl650], wgrid[wl800])
+        plt.plot(np.arange(ngrid), [wl650]*len(tgrid), linewidth=2.0, linestyle='-', color='silver')
+        plt.plot(np.arange(ngrid), [wl800]*len(tgrid), linewidth=2.0, linestyle='-', color='silver')
 
     plt.xticks(xticks, xlabels, fontsize=ticksize)
     plt.yticks(yticks, ylabels, fontsize=ticksize)
@@ -76,8 +74,11 @@ def plot_fluorescence(fl_data, fl_shift):
     if not os.path.isdir('./figures/'):
         os.mkdir('./figures/')
     plt.savefig('./figures/2D-fluorescence.pdf')
+    plt.savefig('./figures/2D-fluorescence.png')
     plt.close()
 
 fl_data = pickle.load(open('./data/fluorescence.pickle', 'rb'))
-fl_shift = np.loadtxt('./data/fl_shift.txt')
+if os.path.isfile('./data/fl_shift.txt'):
+    fl_shift = np.loadtxt('./data/fl_shift.txt')
+else: fl_shift = 0
 plot_fluorescence(fl_data, fl_shift)

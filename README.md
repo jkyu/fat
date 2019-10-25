@@ -13,3 +13,8 @@ Required python packages:
 
 TODO:
 - Toy examples for how this thing works. 
+- Update all scripts to handle arbitrary electronic states. 
+    - Population scripts mostly done (single IC plotting and error fit still need to be done, but the important stuff works)
+    - All of the geometric properties
+    - 2D Fluorescence works for arbitrary number of states. 1D needs to updated. 
+- I want to automate away specifying IC labels in analysis scripts and nstates. Should be stored as an extra "overall dynamics" kind of item in the collect data stage. 

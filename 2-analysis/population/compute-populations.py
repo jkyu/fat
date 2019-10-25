@@ -56,7 +56,7 @@ def get_populations(ics, tgrid, datadir, nstates):
 
             tbf = data[tbf_key]
             state_id = tbf['state_id']
-            print('%s, state %d' %(tbf_key, state_id))
+            print('%s, state s%d' %(tbf_key, state_id))
 
             states['s%d' %state_id].append(tbf_key)
 
