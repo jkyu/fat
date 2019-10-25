@@ -53,7 +53,7 @@ def get_energies(enfile):
     energies = {}
     with open(enfile, 'rb') as f:
         header = f.readline() # header line
-        nstate = int(len(header) - 2)
+        nstate = int(len(header.split()) - 2)
         for i in range(0, nstate):
             energies['s%d' %i] = []
         for line in f:
@@ -61,7 +61,6 @@ def get_energies(enfile):
             time_steps.append(float(a[0]) * 0.024188425)
             e_class.append(float(a[-1]))
             for i in range(0, nstate):
-                si_energy = float(a[i+1])
                 energies['s%d' %i].append(float(a[i+1]))
     data = {}
     for key in energies.keys():
@@ -114,9 +113,9 @@ def get_spawn_info(dirname, ic):
                 a = line.split()
                 spawn['spawn_time']    = float(a[1]) * 0.024188425
                 spawn['spawn_id']      = int(a[3])
-                spawn['spawn_state']   = int(a[4])
+                spawn['spawn_state']   = int(a[4]) - 1 # since these are 1-indexed
                 spawn['parent_id']     = int(a[5])
-                spawn['parent_state']  = int(a[6])
+                spawn['parent_state']  = int(a[6]) - 1
                 spawn['initcond']      = ic
                 spawn['population_transferred'] = population_transfer(dirname, int(a[3]))
                 spawns.append(spawn)
@@ -160,6 +159,7 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
     tbf_data['initcond'] = ic
     tbf_data['tbf_id']   = tbf_id
     tbf_data['energies'] = energies
+    tbf_data['nstates'] = len(energies.keys())
     tbf_data['trajectory']  = trajectory
     tbf_data['time_steps']  = time_steps
     tbf_data['populations'] = populations
@@ -167,7 +167,7 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
 
     return tbf_data
 
-def collect_tbfs(initconds, dirname, prmtop):
+def collect_tbfs(initconds, dirname, prmtop, initstate):
     '''
     Gather TBFs in MDTraj and dump to disk to make subsequent analyses faster. 
     '''
@@ -183,13 +183,15 @@ def collect_tbfs(initconds, dirname, prmtop):
         print('%04d-%04d' %(ic, tbf_id))
 
         tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop)
+        tbf_data['spawn_info'] =  None
+        tbf_data['state_id'] = initstate
+
         key = '%04d-%04d' %(ic, tbf_id)
         data[key] = tbf_data
         print('Finish')
 
         if os.path.isfile(dirname + 'Spawn.log'):
             spawn_info = get_spawn_info(dirname, ic)
-
             ''' 
             Spawned TBFs
             '''
@@ -201,6 +203,9 @@ def collect_tbfs(initconds, dirname, prmtop):
                     print('%04d-%04d' %(ic, tbf_id))
 
                     tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop)
+                    tbf_data['spawn_info'] = spawn
+                    tbf_data['state_id'] = spawn['spawn_state']
+
                     key = '%04d-%04d' %(ic, tbf_id)
                     data[key] = tbf_data
                     print('Finish')
@@ -212,7 +217,8 @@ def collect_tbfs(initconds, dirname, prmtop):
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 ics = [x for x in range(11,50)]
-# ics = [13]
+# ics = [11]
 fmsdir = '../../'
 sysname = '../../ab.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
-collect_tbfs(ics, fmsdir, sysname)
+initstate = 2 # we start on S2 for this system. All of my stored data is 0-indexed for state number.
+collect_tbfs(ics, fmsdir, sysname, initstate)
