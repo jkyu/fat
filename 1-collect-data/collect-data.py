@@ -1,3 +1,4 @@
+import glob
 import pickle
 import mdtraj as md
 import numpy as np
@@ -53,14 +54,14 @@ def get_energies(enfile):
     energies = {}
     with open(enfile, 'rb') as f:
         header = f.readline() # header line
-        nstate = int(len(header.split()) - 2)
-        for i in range(0, nstate):
+        nstates = int(len(header.split()) - 2)
+        for i in range(0, nstates):
             energies['s%d' %i] = []
         for line in f:
             a = line.split()
             time_steps.append(float(a[0]) * 0.024188425)
             e_class.append(float(a[-1]))
-            for i in range(0, nstate):
+            for i in range(0, nstates):
                 energies['s%d' %i].append(float(a[i+1]))
     data = {}
     for key in energies.keys():
@@ -68,7 +69,7 @@ def get_energies(enfile):
     data['total'] = np.array(e_class)
     time_steps = np.array(time_steps)
 
-    return time_steps, data
+    return time_steps, data, nstates
 
 def get_transition_dipoles(tdipfile):
     '''
@@ -152,14 +153,14 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
 
     trajectory = get_positions(xyzfile, prmtop)
     time_steps, populations = get_populations(popfile)
-    _, energies = get_energies(enfile)
+    _, energies, nstates = get_energies(enfile)
     _, transition_dipoles = get_transition_dipoles(tdipfile)
     
     tbf_data = {}
     tbf_data['initcond'] = ic
     tbf_data['tbf_id']   = tbf_id
     tbf_data['energies'] = energies
-    tbf_data['nstates'] = len(energies.keys())
+    tbf_data['nstates'] = nstates
     tbf_data['trajectory']  = trajectory
     tbf_data['time_steps']  = time_steps
     tbf_data['populations'] = populations
@@ -217,13 +218,15 @@ def collect_tbfs(initconds, dirname, prmtop, initstate):
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     simulation_data = {}
-    simulation_data['ics'] = initconds
+    ics = glob.glob('./data/0*.pickle')
+    ics = [int(os.path.basename(x).split('.')[0]) for x in ics]
+    ics.sort()
+    simulation_data['ics'] = ics
     simulation_data['nstates'] = tbf_data['nstates']
     with open('./data/fmsinfo.pickle', 'wb') as handle:
         pickle.dump(simulation_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 ics = [x for x in range(11,50)]
-# ics = [11]
 fmsdir = '../../'
 sysname = '../../ab.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
 initstate = 2 # we start on S2 for this system. All of my stored data is 0-indexed for state number.
