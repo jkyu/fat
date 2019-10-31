@@ -50,7 +50,7 @@ plt.ylabel('Fractional Population', fontsize=labelsize)
 plt.xlabel('Time [fs]', fontsize=labelsize)
 plt.xticks(fontsize=ticksize)
 plt.yticks(fontsize=ticksize)
-plt.legend(loc='best')
+plt.legend(loc='best', frameon=False, fancybox=False, fontsize=ticksize, numpoints=1)
 
 # handles, labels = plt.gca().get_legend_handles_labels()
 # order = [1, 2, 0]
