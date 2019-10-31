@@ -18,16 +18,12 @@ def exp_func(x, A, b, c):
 
 pop_data = pickle.load(open('./data/populations.pickle', 'rb'))
 ics = pop_data['ics']
-tgrid = np.arange(0, 1500, 1)
-interp_populations = pop_data['all_populations']
-ex_keys = [x for x in interp_populations.keys() if x.split('-')[-1]=='01']
-all_ex_pops = np.zeros((len(ex_keys), len(tgrid)))
-for i, tbf_key in enumerate(ex_keys):
-    all_ex_pops[i,:] = interp_populations[tbf_key]
+tgrid = pop_data['tgrid']
+s1_pops = pop_data['ic_populations']['s1']
 
 resampled_t = []
 for count in range(1000):
-    resample = np.array([ all_ex_pops[x,:] for x in np.random.choice(np.arange(len(ics)), size=(len(ics)), replace=True) ])
+    resample = np.array([ s1_pops[x,:] for x in np.random.choice(np.arange(len(ics)), size=(len(ics)), replace=True) ])
     avg_resample = np.mean(resample, axis=0)
     popt, pcov = curve_fit(exp_func, tgrid, avg_resample, absolute_sigma=False)
     resampled_t.append(popt[1])
