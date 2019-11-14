@@ -125,7 +125,9 @@ def get_spawn_info(dirname, ic):
 
 def population_transfer(dirname, spawn_id):
 
-    a = None
+    a = 0
+    if not os.path.isfile(dirname+'Amp.%d' %spawn_id):
+        return a
     with open(dirname + 'Amp.%d' %(spawn_id), 'rb') as f:
         f.seek(-2, os.SEEK_END)     # Jump to second to last byte in file
         while f.read(1) != b'\n':   # Until EOL for previous line is found,
@@ -151,10 +153,19 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
     popfile  = dirname + 'Amp.%d' %tbf_id
     tdipfile = dirname + 'TDip.%d' %tbf_id
 
+    # Handles the case where there is no TBF data despite a spawning point.
+    if not os.path.isfile(popfile):
+        return None
+
     trajectory = get_positions(xyzfile, prmtop)
     time_steps, populations = get_populations(popfile)
     _, energies, nstates = get_energies(enfile)
     _, transition_dipoles = get_transition_dipoles(tdipfile)
+
+    # Catch for staggered array sizes due to running simulations.
+    if not len(time_steps) == len(trajectory):
+        nstep = np.min([len(time_steps), len(trajectory)])
+        time_steps = time_steps[:nstep]
     
     tbf_data = {}
     tbf_data['initcond'] = ic
@@ -204,11 +215,11 @@ def collect_tbfs(initconds, dirname, prmtop, initstate):
                     print('%04d-%04d' %(ic, tbf_id))
 
                     tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop)
-                    tbf_data['spawn_info'] = spawn
-                    tbf_data['state_id'] = spawn['spawn_state']
-
-                    key = '%04d-%04d' %(ic, tbf_id)
-                    data[key] = tbf_data
+                    if not tbf_data==None:
+                        tbf_data['spawn_info'] = spawn
+                        tbf_data['state_id'] = spawn['spawn_state']
+                        key = '%04d-%04d' %(ic, tbf_id)
+                        data[key] = tbf_data
                     print('Finish')
 
         if not os.path.isdir('./data/'):

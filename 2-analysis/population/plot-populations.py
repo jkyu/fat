@@ -14,16 +14,14 @@ def exp_func(x, A, b, c):
 to file as ./data/populations.pickle 
 Read the time grid and the population information to plot them. '''
 
+do_fit = 1
+
 pop_data = pickle.load(open('./data/populations.pickle', 'rb'))
 ics = pop_data['ics']
 tgrid = pop_data['tgrid']
 populations = pop_data['populations']
 errors = pop_data['errors']
 keys = [x for x in populations.keys()]
-
-# popt, pcov = curve_fit(exp_func, tgrid, ex_pop, absolute_sigma=False)
-# print('Exponential fit. Tau = ', popt[1])
-# fit = exp_func(tgrid, *popt)
 
 ''' Plotting functions '''
 
@@ -44,7 +42,11 @@ plt.rc('ytick',labelsize=ticksize)
 for i, key in enumerate(keys):
     label = '%s population' %key
     plt.errorbar(tgrid, populations[key], yerr=errors[key], color=colors[i], linewidth=3.0, elinewidth=1, ecolor=ecolors[i], capsize=0.1, label=label.title())
-# plt.plot(tgrid, fit, color='black', linewidth=2.0, label='Exponential Fit ($\\tau$=%d fs)' %popt[1], linestyle='--')
+if do_fit:
+    popt, pcov = curve_fit(exp_func, tgrid, populations['s1'], absolute_sigma=False)
+    print('Exponential fit. Tau = ', popt[1])
+    fit = exp_func(tgrid, *popt)
+    plt.plot(tgrid, fit, color='black', linewidth=2.0, label='Exponential Fit ($\\tau$=%d fs)' %popt[1], linestyle='--')
 
 plt.ylabel('Fractional Population', fontsize=labelsize)
 plt.xlabel('Time [fs]', fontsize=labelsize)
