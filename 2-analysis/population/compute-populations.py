@@ -114,7 +114,7 @@ Specify the time grid and ICs to use.
 Can use a coarser time grid than is used here and it shouldn't change the result.
 '''
 datadir = '../../1-collect-data/data/'
-tgrid = np.arange(0, 1000, 5) # edit the last number to change the grid spacing
+tgrid = np.arange(0, 300, 5) # edit the last number to change the grid spacing
 fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
 ics = fmsinfo['ics']
 nstates = fmsinfo['nstates']

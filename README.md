@@ -20,6 +20,6 @@ TODO:
 - I want to automate away specifying IC labels in analysis scripts and nstates. Should be stored as an extra "overall dynamics" kind of item in the collect data stage. This is now here as the fmsinfo.pickle data dump. It just stores IC labels and number of electronic states. It's possible that I'll need more information but that, but I don't think it's necessary right now. 
 
 Known bugs:
-- collect-data.py will fail if spawning has been initiated but the child TBF does not yet have data (e.g. when the spawning event shows up in Spawn.log but has not yet generated any positions.X or Amp.X outputs).
+- collect-data.py will fail if spawning has been initiated but the child TBF does not yet have data (e.g. when the spawning event shows up in Spawn.log but has not yet generated any positions.X or Amp.X outputs). [DONE]
 - property averaging can fail if a mismatch in time steps between TBFs of the same FMS simulation result in time arrays of different lengths before interpolation. This should be fixed with the interpolation. 
 - both of these can be solved by not running the data collection on active simulations, but I should figure out some catch or fix for these bugs. 

@@ -237,8 +237,9 @@ def collect_tbfs(initconds, dirname, prmtop, initstate):
     with open('./data/fmsinfo.pickle', 'wb') as handle:
         pickle.dump(simulation_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-ics = [x for x in range(11,50)]
+ics = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 27, 35, 44, 55, 64, 68, 76, 81]
+ics = ics + [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
 fmsdir = '../../'
-sysname = '../../ab.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
-initstate = 2 # we start on S2 for this system. All of my stored data is 0-indexed for state number.
+sysname = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
+initstate = 1 # we start on S1 for this system. All of my stored data is 0-indexed for state number.
 collect_tbfs(ics, fmsdir, sysname, initstate)
