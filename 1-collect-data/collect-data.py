@@ -22,21 +22,21 @@ def get_populations(popfile):
     For population decay, you can just use N.dat, but this is more
     general. 
     '''
-    time_steps = []
+    time_steps_au = []
     amplitudes = []
     with open(popfile, 'rb') as f:
         _ = f.readline() # header line to get rid of
         for line in f: 
             a = line.split()
-            time_step = float(a[0]) * 0.024188425
+            time_step_au = float(a[0])
             amplitude = float(a[1])
-            time_steps.append(time_step)
+            time_steps_au.append(time_step_au)
             amplitudes.append(amplitude)
 
-    time_steps = np.array(time_steps)
+    time_steps_au = np.array(time_steps_au)
     amplitudes = np.array(amplitudes)
 
-    return time_steps, amplitudes 
+    return time_steps_au, amplitudes 
 
 def get_energies(enfile):
     ''' 
@@ -49,7 +49,7 @@ def get_energies(enfile):
     energy should stay constant throughout the FMS simulation. 
     These energies are reported in atomic units. 
     '''
-    time_steps  = []
+    time_steps_au  = []
     e_class = []
     energies = {}
     with open(enfile, 'rb') as f:
@@ -59,7 +59,8 @@ def get_energies(enfile):
             energies['s%d' %i] = []
         for line in f:
             a = line.split()
-            time_steps.append(float(a[0]) * 0.024188425)
+            time_step_au = float(a[0])
+            time_steps_au.append(time_step_au)
             e_class.append(float(a[-1]))
             for i in range(0, nstates):
                 energies['s%d' %i].append(float(a[i+1]))
@@ -67,9 +68,9 @@ def get_energies(enfile):
     for key in energies.keys():
         data[key] = np.array(energies[key])
     data['total'] = np.array(e_class)
-    time_steps = np.array(time_steps)
+    time_steps_au = np.array(time_steps_au)
 
-    return time_steps, data, nstates
+    return time_steps_au, data, nstates
 
 def get_transition_dipoles(tdipfile):
     '''
@@ -87,21 +88,21 @@ def get_transition_dipoles(tdipfile):
     It should be that only S1 matters when computing fluorescence,
     so only Mag.2 is collected. 
     '''
-    time_steps = []
+    time_steps_au = []
     transition_dipoles = []
     with open(tdipfile, 'rb') as f:
         _ = f.readline() # header line to get rid of
         for line in f: 
             a = line.split()
-            time_step = float(a[0]) * 0.024188425
+            time_step_au = float(a[0])
             tdip = float(a[1])
-            time_steps.append(time_step)
+            time_steps_au.append(time_step_au)
             transition_dipoles.append(tdip)
 
-    time_steps = np.array(time_steps)
+    time_steps_au = np.array(time_steps_au)
     transition_dipoles = np.array(transition_dipoles)
 
-    return time_steps, transition_dipoles
+    return time_steps_au, transition_dipoles
 
 def get_spawn_info(dirname, ic):
 
@@ -113,6 +114,7 @@ def get_spawn_info(dirname, ic):
                 spawn = {}
                 a = line.split()
                 spawn['spawn_time']    = float(a[1]) * 0.024188425
+                spawn['spawn_time_au'] = float(a[1])
                 spawn['spawn_id']      = int(a[3])
                 spawn['spawn_state']   = int(a[4]) - 1 # since these are 1-indexed
                 spawn['parent_id']     = int(a[5])
@@ -173,7 +175,8 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
     tbf_data['energies'] = energies
     tbf_data['nstates'] = nstates
     tbf_data['trajectory']  = trajectory
-    tbf_data['time_steps']  = time_steps
+    tbf_data['time_steps']  = time_steps * 0.024188425
+    tbf_data['time_steps_au'] = time_steps
     tbf_data['populations'] = populations
     tbf_data['transition_dipoles'] = transition_dipoles
 
