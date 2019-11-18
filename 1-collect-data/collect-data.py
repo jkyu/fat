@@ -182,14 +182,14 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
 
     return tbf_data
 
-def collect_tbfs(initconds, dirname, prmtop, initstate):
+def collect_tbfs(initconds, dirnames, prmtop, initstate):
     '''
     Gather TBFs in MDTraj and dump to disk to make subsequent analyses faster. 
     '''
     for ic in initconds:
 
         data = {}
-        dirname = fmsdir + ('%04d/' %ic)
+        dirname = dirnames['%d' %ic]
 
         '''
         Parent TBF
@@ -243,6 +243,9 @@ def collect_tbfs(initconds, dirname, prmtop, initstate):
 ics = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 27, 35, 44, 55, 64, 68, 76, 81]
 ics = ics + [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
 fmsdir = '../../'
-sysname = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
+dirnames = {}
+for ic in ics:
+    dirnames['%d' %ic] = fmsdir + ('%04d/' %ic)
+topfile = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
 initstate = 1 # we start on S1 for this system. All of my stored data is 0-indexed for state number.
-collect_tbfs(ics, fmsdir, sysname, initstate)
+collect_tbfs(ics, dirnames, topfile, initstate)
