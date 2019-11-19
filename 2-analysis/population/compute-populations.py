@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import sys
 
 '''
-The S1 population decay and S0 population rise is computed here.
+The population rise and decay for all electronic states are computed here.
 The populations are placed on a uniform time grid and averaged.
 This information is dumped to a pickle file and plotted in plot-populations.py
 '''
@@ -49,7 +49,7 @@ def get_populations(ics, tgrid, datadir, nstates):
     for i in range(nstates):
         states['s%d' %i] = []
 
-    ''' Grab population information out of all ICs and bin that onto a uniform 1 fs time step time grid '''
+    ''' Grab population information out of all ICs and bin that onto a uniform time step time grid (passed in as tgrid) '''
     for ic in ics:
         data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
         for tbf_key in data.keys():

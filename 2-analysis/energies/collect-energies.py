@@ -5,7 +5,7 @@ import mdtraj as md
 import pickle
 import matplotlib.pyplot as plt
 
-''' Get S0 and S1 energies from raw data and put it on a grid '''
+''' Get all energies from raw data and put it on a grid '''
 
 def interpolate(grid, tsteps, data):
 
@@ -32,7 +32,7 @@ def interpolate(grid, tsteps, data):
 
     return interp_data
 
-def get_energy(ics, tgrid, datadir):
+def get_energy(ics, tgrid, datadir, nstates):
     '''
     Examine the energies for S0 and S1 over time for the TBFs. 
     Load the fat data file and collect the spawn information.
@@ -40,42 +40,36 @@ def get_energy(ics, tgrid, datadir):
     '''
     print('Loading excited state trajectories. Extracting energy and population information.')
 
-    interp_s0_energies = {}
-    interp_s1_energies = {}
     interp_populations = {}
+    interp_energies = {}
+    states = {}
+    for i in range(nstates):
+        states['s%d' %i] = []
 
-    ex_keys = []
-    gs_keys = []
-
+    ''' Grab energy information out of all ICs and bin them onto a uniform time script. '''
     for ic in ics:
-        data = pickle.load(open(datadir+('/%02d.pickle' %ic), 'rb'))
+        data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
         for tbf_key in data.keys():
-            print(tbf_key)
+
             tbf = data[tbf_key]
+            state_id = tbf['state_id']
+            print('%s, state s%d' %(tbf_key, state_id))
 
-            if tbf['tbf_id']==1:
-                ex_keys.append(tbf_key)
-            else:
-                gs_keys.append(tbf_key)
+            states['s%d' %state_id].append(tbf_key)
 
-            time_steps  = tbf['time_steps']
+            time_steps = tbf['time_steps']
             populations = tbf['populations']
-            s0_energies = tbf['energies']['s0'] * 27.21138602
-            s1_energies = tbf['energies']['s1'] * 27.21138602
+            ic_energies = {}
+            for i in range(nstates):
+                state_energies = tbf['energies']['s%d' %i] 
+                ic_energies['s%d' %i] = interpolate(tgrid, time_steps, state_energies)
 
-            interp_s0 = interpolate(tgrid, time_steps, s0_energies)
-            interp_s1 = interpolate(tgrid, time_steps, s1_energies)
             interp_pop = interpolate(tgrid, time_steps, populations)
-
-            interp_s0_energies['%s' %tbf_key] = interp_s0
-            interp_s1_energies['%s' %tbf_key] = interp_s1
             interp_populations['%s' %tbf_key] = interp_pop
+            interp_energies['%s' %tbf_key] = ic_energies
 
     data2 = {}
-    data2['s0_energies'] = interp_s0_energies
-    data2['s1_energies'] = interp_s1_energies
-    data2['gs_keys'] = gs_keys
-    data2['ex_keys'] = ex_keys
+    data2['energies'] = interp_energies
     data2['populations'] = interp_populations
     data2['tgrid'] = tgrid
     print('Dumping data to energies.pickle')
@@ -84,7 +78,14 @@ def get_energy(ics, tgrid, datadir):
     with open('./data/energies.pickle', 'wb') as handle:
         pickle.dump(data2, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-ics = [ x for x in range(1,33) if x not in [6,17] ]
-tgrid = np.arange(0, 1500, 5)
+''' 
+Specify the time grid and ICs to use. 
+Can use a coarser time grid than is used here and it shouldn't change the result.
+'''
 datadir = '../../1-collect-data/data/'
-get_energy(ics, tgrid, datadir)
+tgrid = np.arange(0, 250, 5) # edit the last number to change the grid spacing
+fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
+# ics = fmsinfo['ics']
+ics = [3]
+nstates = fmsinfo['nstates']
+get_energy(ics, tgrid, datadir, nstates)
