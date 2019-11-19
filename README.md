@@ -14,8 +14,9 @@ Required python packages:
 TODO:
 - Toy examples for how this thing works. 
 - Update all scripts to handle arbitrary electronic states. 
-    - Population scripts mostly done (single IC plotting and error fit still need to be done, but the important stuff works) [Done]
-    - All of the geometric properties
+    - Population scripts done.
+    - Interpolation for energies now works. 
+    - All of the geometric properties [BLA and dihedrals work, but need to update these.]
     - 2D Fluorescence works for arbitrary number of states. 1D needs to updated. 
 - I want to automate away specifying IC labels in analysis scripts and nstates. Should be stored as an extra "overall dynamics" kind of item in the collect data stage. This is now here as the fmsinfo.pickle data dump. It just stores IC labels and number of electronic states. It's possible that I'll need more information but that, but I don't think it's necessary right now. [Done]
 

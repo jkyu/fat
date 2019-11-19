@@ -67,7 +67,7 @@ def get_populations(ics, tgrid, datadir, nstates):
             interp_populations['%s' %tbf_key] = interp_pop
     
     avg_populations = {}
-    all_populations = {}
+    state_populations = {}
     pop_errors = {}
     for state in states.keys():
         ''' Compute the average of the population over all ICs '''
@@ -93,17 +93,17 @@ def get_populations(ics, tgrid, datadir, nstates):
             state_error[k] = std
 
         avg_populations[state] = avg_pops
-        all_populations[state] = state_pops
+        state_populations[state] = state_pops
         pop_errors[state] = state_error
 
     data2 = {}
     data2['ics'] = ics
     data2['tgrid'] = tgrid
     data2['nstates'] = nstates
-    data2['populations'] = avg_populations
-    data2['ic_populations'] = all_populations
+    data2['populations'] = avg_populations # averaged populations by state
+    data2['state_populations'] = state_populations # all populations by state label
     data2['errors'] = pop_errors
-    data2['tbf_populations'] = interp_populations # populations for individual ICs
+    data2['tbf_populations'] = interp_populations # populations for individual TBFs
     print('Dumping interpolated amplitudes to populations.pickle')
 
     if not os.path.isdir('./data/'):
@@ -117,7 +117,7 @@ Specify the time grid and ICs to use.
 Can use a coarser time grid than is used here and it shouldn't change the result.
 '''
 datadir = '../../1-collect-data/data/'
-tgrid = np.arange(0, 200, 5) # edit the last number to change the grid spacing
+tgrid = np.arange(0, 250, 5) # edit the last number to change the grid spacing
 fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
 ics = fmsinfo['ics']
 nstates = fmsinfo['nstates']

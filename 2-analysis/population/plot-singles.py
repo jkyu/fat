@@ -24,14 +24,11 @@ pop_data = pickle.load(open('./data/populations.pickle', 'rb'))
 tgrid = pop_data['tgrid']
 ics = pop_data['ics']
 
-interp_populations = pop_data['all_populations']
-ex_pop = pop_data['ex_populations']
-ex_keys = [x for x in interp_populations.keys() if x.split('-')[-1]=='01']
+target_state = 's1'
+state_populations = pop_data['state_populations'][target_state]
+avg_pop = pop_data['populations'][target_state]
 
-all_ex_pops = np.zeros((len(ex_keys), len(tgrid)))
-for i, tbf_key in enumerate(ex_keys):
-    all_ex_pops[i,:] = interp_populations[tbf_key]
-
+rcParams.update({'figure.autolayout': True})
 labelsize = 16
 ticksize = 14
 plt.rc('xtick',labelsize=ticksize)
@@ -40,13 +37,13 @@ fig = plt.figure(figsize=(6,5))
 
 resampled_t = []
 for idx in range(len(ics)):
-    single = all_ex_pops[idx,:]
+    single = state_populations[idx,:]
     if idx==0:
         plt.plot(tgrid, single, linestyle='--', linewidth=0.8, label='Single IC')
     else:
         plt.plot(tgrid, single, linewidth=0.8, linestyle='--')
-plt.plot(tgrid, ex_pop, color='firebrick', linewidth=2.0, label='Full wavepacket')
-plt.axis([0, 1500, 0, 1.03])
+plt.plot(tgrid, avg_pop, color='firebrick', linewidth=2.0, label='Full wavepacket')
+plt.axis([0, 250, 0, 1.03])
 plt.legend(loc='best', fontsize=ticksize)
 plt.xlabel('Time [fs]', fontsize=labelsize)
 plt.ylabel('Excited State Population', fontsize=labelsize)
