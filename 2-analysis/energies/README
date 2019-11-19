@@ -1,0 +1,5 @@
+collect-energies.py just interpolates the absolute energies onto a grid.
+These energies aren't very meaningful by themselves -- what matters is the relative energies,
+which you should compute at your discretion.
+The plot script included here is just to see that this works. 
+It won't go into a paper or a slide like the population plot. 
