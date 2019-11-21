@@ -46,7 +46,12 @@ if do_fit:
     popt, pcov = curve_fit(exp_func, tgrid, populations['s1'], absolute_sigma=False)
     print('Exponential fit. Tau = ', popt[1])
     fit = exp_func(tgrid, *popt)
-    plt.plot(tgrid, fit, color='black', linewidth=2.0, label='Exponential Fit ($\\tau$=%d fs)' %popt[1], linestyle='--')
+    if os.path.isfile('./data/fit_error.npz'):
+        fit_error = np.load('./data/fit_error.npz')['error']
+        fit_label = 'Exponential Fit ($\\tau=%d \pm %d$ fs)' %(popt[1], fit_error)
+    else:
+        fit_label = 'Exponential Fit ($\\tau=%d$ fs)' %popt[1]
+    plt.plot(tgrid, fit, color='black', linewidth=2.0, label=fit_label, linestyle='--')
 
 plt.ylabel('Fractional Population', fontsize=labelsize)
 plt.xlabel('Time [fs]', fontsize=labelsize)

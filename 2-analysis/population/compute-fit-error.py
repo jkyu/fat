@@ -19,7 +19,7 @@ def exp_func(x, A, b, c):
 pop_data = pickle.load(open('./data/populations.pickle', 'rb'))
 ics = pop_data['ics']
 tgrid = pop_data['tgrid']
-s1_pops = pop_data['ic_populations']['s1']
+s1_pops = pop_data['state_populations']['s1']
 
 resampled_t = []
 for count in range(1000):
@@ -40,4 +40,4 @@ print('Q1: ', np.percentile(taus, 25))
 print('Q2: ', np.percentile(taus, 50))
 print('Q3: ', np.percentile(taus, 75))
 
-# np.savez('./data/taus.npz', taus=taus, error=np.std(taus))
+np.savez('./data/fit_error.npz', taus=taus, error=np.std(taus))
