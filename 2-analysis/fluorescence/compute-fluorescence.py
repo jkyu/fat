@@ -144,8 +144,6 @@ def approx_fluorescence(egrid, tgrid, en_gap, intens):
             if dE < 0.1:
                 fl_grid[ind, t] += flin
 
-    fl_grid = fl_grid / np.max(fl_grid)
-
     return fl_grid
 
 def convolve(egrid, tgrid, en_gap, tsteps, intens, sigE=0.15, sigT=65):
@@ -159,8 +157,6 @@ def convolve(egrid, tgrid, en_gap, tsteps, intens, sigE=0.15, sigT=65):
         for idx2, cT in enumerate(conv_T):
             conv_E = cT * np.exp( -0.5 * ((egrid - e0)/sigE)**2 ) * (1./(sigE*np.sqrt(2.*np.pi))) 
             fl_grid[idx2,:] += conv_E
-
-    fl_grid = fl_grid / np.max(fl_grid)
 
     return fl_grid
 
@@ -195,6 +191,6 @@ if __name__=='__main__':
     fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
     ics = fmsinfo['ics']
     npoints = 201
-    tgrid  = np.linspace(-90., 510., npoints)
-    wgrid = np.linspace(340, 1140, npoints)
+    tgrid  = np.linspace(-90., 260., npoints)
+    wgrid = np.linspace(100, 1140, npoints)
     compute_fluorescence(ics, tgrid, wgrid, datadir)

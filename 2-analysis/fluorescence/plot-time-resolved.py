@@ -216,7 +216,7 @@ def run():
 
     for i in range(2): 
         plt.plot(fl_data['tgrid'], slices[i], linewidth=2.0, color=colors[1], linestyle=styles[i])
-        plt.errorbar(fl_data['tgrid'][(i*5)::10], slices[i][(i*5)::10], yerr=error_slices[i][(i*5)::10], color=colors[1], linewidth=2.0, capsize=2.0, elinewidth=0.8, ecolor=error_colors[i], linestyle=styles[i], label='AIMS, %d nm, $\\tau=$%d fs' %(np.array([650, 800])[i], taus[i+2]))
+        plt.errorbar(fl_data['tgrid'][(i*5)::10], slices[i][(i*5)::10], yerr=error_slices[i][(i*5)::10], color=colors[1], linewidth=0, capsize=2.0, elinewidth=0.8, ecolor=error_colors[i], linestyle=styles[i], label='AIMS, %d nm, $\\tau=$%d fs' %(np.array([650, 800])[i], taus[i+2]))
     plt.plot(expt_t+tshift, expt_fl_650, label='Expt, 650 nm, $\\tau=$%d fs' %taus[0], linewidth=2.0, color=colors[0], linestyle=styles[0])
     plt.plot(expt_t+tshift, expt_fl_800, label='Expt, 800 nm, $\\tau=$%d fs' %taus[1], linewidth=2.0, color=colors[0], linestyle=styles[1])
 
