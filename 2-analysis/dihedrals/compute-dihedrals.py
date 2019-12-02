@@ -12,7 +12,7 @@ Also computes the average dihedrals if the flag is turned on and computes
 the sampling error of the dihedral angles by bootstrapping.
 '''
 
-def interpolate(grid, tsteps, data, do_avg=False):
+def interpolate(grid, tsteps, data, do_state_specific=False):
 
     interp_data = np.zeros((len(grid)))
     spacing = np.max(grid) / float(len(grid))
@@ -33,7 +33,7 @@ def interpolate(grid, tsteps, data, do_avg=False):
             tdiffs_frac = tdiffs / np.sum(tdiffs) # normalizes the distance from the grid point
             interp_data[i] = np.average(dat, weights=tdiffs_frac) # weighted average of the data points by their distance from the grid point
         else: 
-            if do_avg:
+            if do_state_specific:
                 interp_data[i] = interp_data[i-1]
             else:
                 interp_data[i] = np.nan
@@ -44,7 +44,7 @@ def interpolate(grid, tsteps, data, do_avg=False):
 
     return interp_data
 
-def compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_avg=False):
+def compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_state_specific=False):
     '''
     Load the fat data file and collect the spawn information.
     Gather the value of the dihedral angles from the trajectories.
@@ -103,10 +103,10 @@ def compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_avg=False
                     dihes[i] = dihes[i] - 360
                 elif (dihes[i] - dihes[i-1]) < -300:
                     dihes[i] = dihes[i] + 360
-            interp_dihes = interpolate(tgrid, tsteps, dihes, do_avg=do_avg)
+            interp_dihes = interpolate(tgrid, tsteps, dihes, do_state_specific=do_state_specific)
             dihes_dict[dihe_name] = interp_dihes
 
-            dihes_zeroed = interpolate(tgrid, np.array(tsteps) - tsteps[0], dihes, do_avg=do_avg)
+            dihes_zeroed = interpolate(tgrid, np.array(tsteps) - tsteps[0], dihes, do_state_specific=do_state_specific)
             zeroed_dict[dihe_name] = dihes_zeroed
 
         interp_populations[tbf_key] = interpolate(tgrid, tsteps, raw_pops[tbf_key])
@@ -115,6 +115,8 @@ def compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_avg=False
 
     # Cache data
     data2 = {}
+    data2['ics'] = ics
+    data2['nstates'] = nstates
     data2['dihedral_names'] = dihedral_names
     data2['dihedrals'] = interp_dihedrals
     data2['populations'] = interp_populations
@@ -142,4 +144,4 @@ datadir = '../../1-collect-data/data/'
 fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
 ics = fmsinfo['ics']
 nstates = fmsinfo['nstates']
-compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_avg=False)
+compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_state_specific=False)
