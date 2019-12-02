@@ -14,28 +14,35 @@ but good to see if there's a trend at short time delay (e.g. the rapid BLA
 inversion in bR) '''
 
 def smooth_data(x, y, npoints):
+    
+    ''' The smoothing function doesn't work if you have NaNs in your data (e.g. data 
+    TBFs that do not start at time zero) and should not be used if averaging over 
+    all TBFs '''
 
-    # # Uses spline interpolation between points to generate a smoother plot
+    # Uses spline interpolation between points to generate a smoother plot
     tck = interpolate.splrep(x, y, s=0)
     xnew = np.linspace(x[0], x[-1], npoints)
     ynew = interpolate.splev(xnew, tck, der=0)
 
     return xnew, ynew 
 
-def phase1(bla_data, offset=78):
+def plot(bla_data, do_smoothing=False):
 
     '''
     Plot excited state trajectories
     '''
-    ex_keys = bla_data['ex_keys']
-    gs_keys = bla_data['gs_keys']
     time = bla_data['tgrid']
+    keys = [x for x in bla_data['blas'].keys()]
 
     ''' Load data for excited state TBFs '''
-    npoints = 51
-    all_blas  = np.zeros((len(ex_keys), (npoints-1)*5+1))
-    for i, key in enumerate(ex_keys):
-        tgrid, all_blas[i,:] = smooth_data(time[:npoints], bla_data['blas'][key][:npoints], (npoints-1)*5+1)
+    all_blas  = np.zeros((len(keys), len(time)))
+    if do_smoothing:
+        for i, key in enumerate(keys):
+            tgrid, all_blas[i,:] = smooth_data(time[:npoints], bla_data['blas'][key][:npoints], (npoints-1)*5+1)
+    else:
+        tgrid = time
+        for i, key in enumerate(keys):
+            all_blas[i,:] = bla_data['blas'][key]
 
     ''' Average over trajectories accounting for nan values '''
     ma_blas   = np.ma.MaskedArray(all_blas, mask=np.isnan(all_blas))
@@ -48,7 +55,7 @@ def phase1(bla_data, offset=78):
     plt.rc('xtick',labelsize=ticksize)
     plt.rc('ytick',labelsize=ticksize)
 
-    for i in range(len(ex_keys)):
+    for i in range(len(keys)):
         plt.plot(tgrid, all_blas[i,:], linewidth=0.5, color='silver')
     plt.plot(tgrid, avg_blas, linestyle='-', color='black', label='Average BLA')
 
@@ -58,10 +65,10 @@ def phase1(bla_data, offset=78):
     plt.legend(loc='best', frameon=False, fontsize=ticksize)
     if not os.path.isdir('./figures'):
         os.mkdir('./figures')
-    plt.savefig('./figures/avg-bla.pdf')
-    plt.savefig('./figures/avg-bla.png')
+    plt.savefig('./figures/avg-bla.pdf', dpi=300)
+    plt.savefig('./figures/avg-bla.png', dpi=300)
 
 rcParams.update({'figure.autolayout': True})
 bla_data = pickle.load(open('./data/bla.pickle', 'rb'))
 
-phase1(bla_data)
+plot(bla_data)

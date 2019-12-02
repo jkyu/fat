@@ -51,25 +51,17 @@ def compute_bla(ics, tgrid, datadir, single_index, double_index):
     raw_doubles = {}
     raw_blas = {}
 
-    gs_keys = []
-    ex_keys = []
-
     single_names = [x for x in single_index.keys()]
     single_list  = [ single_index[x] for x in single_names ]
     double_names = [x for x in double_index.keys()]
     double_list  = [ double_index[x] for x in double_names ]
 
     for ic in ics:
-        data = pickle.load(open(datadir + ('/%02d.pickle' %ic), 'rb'))
+        data = pickle.load(open(datadir + ('/%04d.pickle' %ic), 'rb'))
         for tbf_key in data.keys():
 
             print(tbf_key)
             tbf = data[tbf_key]
-
-            if tbf['tbf_id']==1:
-                ex_keys.append(tbf_key)
-            else:
-                gs_keys.append(tbf_key)
 
             # ic = tbf['initcond']
             time_steps = tbf['time_steps']
@@ -121,6 +113,7 @@ def compute_bla(ics, tgrid, datadir, single_index, double_index):
     print('Aggregating bond length alternation in time by interpolating.')
     for tbf_key in raw_blas.keys():
         interp_blas[tbf_key] = interpolate(tgrid, raw_tsteps[tbf_key], raw_blas[tbf_key])
+    print(interp_blas)
 
     print('Averaging single bond lengths per IC')
     avg_singles = {}
@@ -150,8 +143,6 @@ def compute_bla(ics, tgrid, datadir, single_index, double_index):
     data2['single_names'] = single_names # list of all bond names
     data2['double_names'] = double_names
     data2['tgrid'] = tgrid # array for time grid
-    data2['ex_keys'] = ex_keys
-    data2['gs_keys'] = gs_keys
 
     print('Dumping interpolated amplitudes to bla.pickle')
     if not os.path.isdir('./data'):
@@ -176,7 +167,9 @@ double_index['C11=C12'] = [3346, 3344]
 double_index['C13=C14'] = [3339, 3337]
 double_index['C15=NZ']  = [3335, 3333]
 
-ics = [x for x in range(1,33) if x not in [6,17]]
-tgrid = np.arange(0, 1500, 5)
+tgrid = np.arange(0, 250, 5)
 datadir = '../../1-collect-data/data/'
+fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
+ics = fmsinfo['ics']
+nstates = fmsinfo['nstates']
 compute_bla(ics, tgrid, datadir, single_index, double_index)
