@@ -84,7 +84,7 @@ def integrate_fluorescence_energy(fl_data, bounds=None):
 
     return fl_1D, tgrid
 
-def fl_slices(fl_data, shift, width=0., error=None):
+def fl_slices(fl_data, slices_wl, shift, width=0., error=None):
 
     if error:
         er = error['fluorescence_error']
@@ -92,7 +92,7 @@ def fl_slices(fl_data, shift, width=0., error=None):
     egrid = fl_data['egrid']
     tgrid = fl_data['tgrid']
 
-    slices_wl = [650, 800]
+    # slices_wl = [650, 800]
     slices_ev = [ 1240./x for x in slices_wl ]
     slices_shifted = [ x+shift for x in slices_ev ]
 
@@ -113,7 +113,7 @@ def fl_slices(fl_data, shift, width=0., error=None):
     slices = []
     er_slices = []
     for idx in slice_idx:
-        print(egrid[idx[0]])
+        # print(egrid[idx[0]]) # print the energy corresponding to the wavelength
         fl_slice = np.array(fl[:, idx[0]])
         fl_slice = fl_slice / np.max(fl_slice)
         er_slice = np.array(er[:, idx[0]])
@@ -157,55 +157,66 @@ def integrate_fluorescence_time(fl_data):
 
     return fl_1D, egrid
 
-def run():
+def run(slice_wls, compute_shift=False, tshift=0):
 
-    ''' Gather data for comparison to experimental fluorescence lineouts '''
-    expt_fl  = np.loadtxt('./expt-data/dobler-fl.txt', delimiter=',')
-    expt_fl_x, expt_fl_y = process_expt(expt_fl)
-    expt_fl_max = find_max(expt_fl_y, expt_fl_x)
+    ''' Gather data from our computed 2D fluorescence spectrum. '''
+    fl_data = pickle.load(open('./data/fluorescence.pickle', 'rb')) # hard coded paths
+    fl_error = pickle.load(open('./data/fl-error.pickle', 'rb'))
 
-    ''' Gather data from our computed fluorescence spectrum and compute
-    the energy shift of our spectrum relative to experiment. Also have
-    the option to shift in time, although this is zero by default. '''
-    tshift = 0
-    fl_data = pickle.load(open('./data/fluorescence.pickle', 'rb'))
-    fl_1D, x_fl = integrate_fluorescence_time(fl_data)
-    fl_1D_max = find_max(fl_1D, x_fl)
-    fl_shift = fl_1D_max[1] - expt_fl_max[1]
-    print('Energy Shift = %f eV' %fl_shift)
-    np.savetxt('./data/fl_shift.txt', np.array([fl_shift]))
+    ''' Optional flag for computing the energy shift to match the fluorescence maximum of
+    the experimental data by comparing steady state fluorescence spectra. '''
+    if compute_shift:
+        ''' Gather data for comparison to experimental steady state fluorescence '''
+        expt_fl  = np.loadtxt('./expt-data/dobler-fl.txt', delimiter=',') # has a hard coded path
+        expt_fl_x, expt_fl_y = process_expt(expt_fl)
+        expt_fl_max = find_max(expt_fl_y, expt_fl_x)
+
+        ''' Compute the energy shift of our time-integrated fluorescence relative to experiment. '''
+        fl_1D, x_fl = integrate_fluorescence_time(fl_data)
+        fl_1D_max = find_max(fl_1D, x_fl)
+        fl_shift = fl_1D_max[1] - expt_fl_max[1]
+        print('Energy Shift = %f eV' %fl_shift)
+        np.savetxt('./data/fl_shift.txt', np.array([fl_shift]))
+    else: 
+        fl_shift = 0.
+
+    ''' Take slices from the 2D fluorescence spectrum. '''
+    slices, error_slices = fl_slices(fl_data, slice_wls, fl_shift, error=fl_error)
+
+    ''' Collect experimental fluorescence lineout data. You probably have this saved
+    by tracing some lines from a previously published fluorescence trace. '''
+    expt_slices = []
+    # do whatever to load the expt data. just put them into a list, though.
+    for wl in slice_wls:
+        expt_raw = np.loadtxt('./expt-data/%d.txt' %wl, delimiter=',')  # hard coded paths
+        expt_t, expt_fl = process_expt_trf(expt_raw)
+        expt_slices.append(expt_fl)
+
+    ''' Compute exponential fit for fluorescence lineouts. The range of the
+    exponential fit is taken to start at the fluorescence maximum. '''
+    taus_aims = []
+    taus_expt = []
+    # expt_fits = [] # if you want to plot the exp fit for debugging reasons
+    # aims_fits = []
+    for i, wl in enumerate(slice_wls):
+        tmax = np.argmax(expt_slices[i])
+        popt, pcov = exp_fit(expt_t[tmax:] - expt_t[tmax], expt_slices[i][tmax:])
+        taus_expt.append(1./popt[0]+expt_t[tmax])
+        # fit = exp_func(expt_t, *popt) # exp fits for debugging
+        # expt_fits.append(fit) # exp fits for debugging 
+        print('%d nm experimental decay constant: %f' %(wl, (1./popt[0]+expt_t[tmax])))
+        tmax = np.argmax(slices[i])
+        popt, pcov = exp_fit(fl_data['tgrid'][tmax:] - fl_data['tgrid'][tmax], slices[i][tmax:])
+        taus_aims.append(1./popt[0]+fl_data['tgrid'][tmax])
+        # fit = exp_func(fl_data['tgrid'], *popt) # exp fits for debugging
+        # aims_fits.append(fit) # exp fits for debugging 
+        print('%d nm AIMS decay constant: %f' %(wl, (1./popt[0]+fl_data['tgrid'][tmax])))
 
     '''
     Plot 1D for time resolved fluorescence. Take slices of the 2D fluorescence
-    where the slices correspond to 650 nm and 800 nm, but shifted to match
-    the experimental fluorescence spectrum.
+    where the slices correspond to wavelengths listed in slice_wls, but shifted to match
+    the experimental fluorescence spectrum if fl_shift is not zero (default). 
     '''
-    expt_650 = np.loadtxt('./expt-data/schmidt-f3-650.txt', delimiter=',')
-    expt_800 = np.loadtxt('./expt-data/schmidt-f3-800.txt', delimiter=',')
-    expt_t, expt_fl_650 = process_expt_trf(expt_650)
-    _, expt_fl_800= process_expt_trf(expt_800)
-
-    fl_error = pickle.load(open('./data/fl-error.pickle', 'rb'))
-    slices, error_slices = fl_slices(fl_data, fl_shift, error=fl_error)
-
-    tmax = np.argmax(expt_fl_650)
-    taus = []
-    popt, pcov = exp_fit(expt_t[tmax:] - expt_t[tmax], expt_fl_650[tmax:])
-    taus.append(1./popt[0]+expt_t[tmax])
-    print('650 nm experimental decay constant: %f' %(1./popt[0]+expt_t[tmax]))
-    tmax = np.argmax(expt_fl_800)
-    popt, pcov = exp_fit(expt_t[tmax:] - expt_t[tmax], expt_fl_800[tmax:])
-    taus.append(1./popt[0]+expt_t[tmax])
-    print('800 nm experimental decay constant: %f' %(1./popt[0]+expt_t[tmax]))
-    tmax = np.argmax(slices[0])
-    popt, pcov = exp_fit(fl_data['tgrid'][tmax:] - fl_data['tgrid'][tmax], slices[0][tmax:])
-    taus.append(1./popt[0]+fl_data['tgrid'][tmax])
-    print('650 nm AIMS decay constant: %f' %(1./popt[0]+fl_data['tgrid'][tmax]))
-    tmax = np.argmax(slices[1])
-    popt, pcov = exp_fit(fl_data['tgrid'][tmax:] - fl_data['tgrid'][tmax], slices[1][tmax:])
-    taus.append(1./popt[0]+fl_data['tgrid'][tmax])
-    print('800 nm AIMS decay constant: %f' %(1./popt[0]+fl_data['tgrid'][tmax]))
-
     fig = plt.figure(facecolor='white', figsize=(6,5))
     labelsize = 16
     ticksize = 14
@@ -214,13 +225,22 @@ def run():
     error_colors = ['slateblue', 'violet']
     styles = ['-', '--']
 
-    for i in range(2): 
+    for i in range(len(slice_wls)): 
         plt.plot(fl_data['tgrid'], slices[i], linewidth=2.0, color=colors[1], linestyle=styles[i])
-        plt.errorbar(fl_data['tgrid'][(i*5)::10], slices[i][(i*5)::10], yerr=error_slices[i][(i*5)::10], color=colors[1], linewidth=0, capsize=2.0, elinewidth=0.8, ecolor=error_colors[i], linestyle=styles[i], label='AIMS, %d nm, $\\tau=$%d fs' %(np.array([650, 800])[i], taus[i+2]))
-    plt.plot(expt_t+tshift, expt_fl_650, label='Expt, 650 nm, $\\tau=$%d fs' %taus[0], linewidth=2.0, color=colors[0], linestyle=styles[0])
-    plt.plot(expt_t+tshift, expt_fl_800, label='Expt, 800 nm, $\\tau=$%d fs' %taus[1], linewidth=2.0, color=colors[0], linestyle=styles[1])
+        plt.errorbar(fl_data['tgrid'][(i*5)::10], slices[i][(i*5)::10], yerr=error_slices[i][(i*5)::10], color=colors[1], linewidth=0, capsize=2.0, elinewidth=0.8, ecolor=error_colors[i], linestyle=styles[i], label='AIMS, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_aims[i]))
+        ''' The following three lines plot the exp fit for debugging. '''
+        # tmax = np.argmax(slices[i]) 
+        # plt.plot(fl_data['tgrid']-fl_data['tgrid'][tmax]+tshift, slices[i], label='AIMS, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_aims[i]), linewidth=2.0, color=colors[0], linestyle=styles[i])
+        # plt.plot(fl_data['tgrid']+tshift, aims_fits[i], label='Exp Fit, %d nm' %(slice_wls[i]), linewidth=1.0, color=colors[0], linestyle=styles[i]) # exp fits for debugging
 
-    plt.axis([-100, 1000, 0, 1.3])
+    for i in range(len(slice_wls)):
+        plt.plot(expt_t+tshift, expt_slices[i], label='Expt, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_expt[i]), linewidth=2.0, color=colors[0], linestyle=styles[i])
+        ''' The following three lines plot the exp fit for debugging. '''
+        # tmax = np.argmax(expt_slices[i]) 
+        # plt.plot(expt_t-expt_t[tmax]+tshift, expt_slices[i], label='Expt, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_expt[i]), linewidth=2.0, color=colors[0], linestyle=styles[i])
+        # plt.plot(expt_t+tshift, expt_fits[i], label='Exp Fit, %d nm' %(slice_wls[i]), linewidth=1.0, color=colors[0], linestyle=styles[i]) # exp fits for debugging
+
+    # plt.axis([-100, 1000, 0, 1.3])
     plt.xlabel('Time [fs]', fontsize=labelsize)
     plt.ylabel('Fluorescence Intensity [au]', fontsize=labelsize)
     plt.legend(loc='best', fontsize=legendsize, frameon=False)
@@ -231,4 +251,5 @@ def run():
         os.mkdir('./figures/')
     plt.savefig('./figures/time-resolved-fluorescence.pdf')
 
-run()
+slice_wls = [650, 800]
+run(slice_wls)
