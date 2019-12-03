@@ -8,19 +8,15 @@ Feel free to copy and modify any of my scripts, but please give me constructive 
 Required python packages:
 - NumPy
 - SciPy
-- MDTraj
+- MDTraj (the dependence on MDTraj is very light and just saves me from writing a coordinate parser for now. Will handle later to reduce unnecessary dependencies.)
 - MatPlotLib
 
 TODO:
 - Toy examples for how this thing works. 
+- Some descriptions of the main data structures I'm using here. How to access the pickled data in general.
+- Remove the requirement of a topology file (read: write my own xyz parser). 
 - Update all scripts to handle arbitrary electronic states. 
     - Population scripts done.
     - Interpolation for energies now works. 
-    - All of the geometric properties [BLA and dihedrals work, but need to update these.]
-    - 2D Fluorescence works for arbitrary number of states. 1D needs to updated. 
-- I want to automate away specifying IC labels in analysis scripts and nstates. Should be stored as an extra "overall dynamics" kind of item in the collect data stage. This is now here as the fmsinfo.pickle data dump. It just stores IC labels and number of electronic states. It's possible that I'll need more information but that, but I don't think it's necessary right now. [Done]
-
-Known bugs:
-- collect-data.py will fail if spawning has been initiated but the child TBF does not yet have data (e.g. when the spawning event shows up in Spawn.log but has not yet generated any positions.X or Amp.X outputs). [Done]
-- property averaging can fail if a mismatch in time steps between TBFs of the same FMS simulation result in time arrays of different lengths before interpolation. This should be fixed with the interpolation. [Done]
-- both of these can be solved by not running the data collection on active simulations, but I should figure out some catch or fix for these bugs. [Done]
+    - Bond length and dihedral angle tracking work now. [Dec 2, 2019]
+    - 2D Fluorescence works for arbitrary number of states. I think 1D also works? Haven't had a reason to test yet. [Dec 2, 2019]
