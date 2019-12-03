@@ -19,4 +19,4 @@ TODO:
     - Population scripts done.
     - Interpolation for energies now works. 
     - Bond length and dihedral angle tracking work now. [Dec 2, 2019]
-    - 2D Fluorescence works for arbitrary number of states. I think 1D also works? Haven't had a reason to test yet. [Dec 2, 2019]
+    - 2D Fluorescence works for arbitrary number of states. Plotting steady-state and time-resolved single-wavelength fluorescence signals now works, but is not very general due to how much user input is involved. For now, use the 1D processing/plotting code as examples instead of black box scripts. [Dec 3, 2019]
