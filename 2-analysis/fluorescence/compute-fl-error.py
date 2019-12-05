@@ -35,12 +35,14 @@ keys = [x for x in tbf_data.keys()]
 fl_grid = compute_fluorescence(tbf_data, keys)
 normalizer = np.max(fl_grid)
 
+print('Resampling ICs and recomputing the fluorescence.')
 sampled_keys = [ [x for x in np.random.choice(keys, size=len(ics), replace=False)] for _ in range(1000) ]
-sampled_grids = np.array([ (compute_fluorescence(tbf_data, ics) / (normalizer*(len(ics)/30))) for ics in sampled_keys ])
+sampled_grids = np.array([ (compute_fluorescence(tbf_data, ics) / normalizer) for ics in sampled_keys ])
 
 grid_error = np.std(sampled_grids, axis=0)
 
 data2 = {}
 data2['fluorescence_error'] = grid_error
+print('Dumping the bootstrapping error for the fluorescence signal to ./data/fl-error.pickle.')
 with open('./data/fl-error.pickle', 'wb') as handle:
     pickle.dump(data2, handle, protocol=pickle.HIGHEST_PROTOCOL)
