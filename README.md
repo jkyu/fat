@@ -20,3 +20,4 @@ TODO:
     - Interpolation for energies now works. 
     - Bond length and dihedral angle tracking work now. [Dec 2, 2019]
     - 2D Fluorescence works for arbitrary number of states. Plotting steady-state and time-resolved single-wavelength fluorescence signals now works, but is not very general due to how much user input is involved. For now, use the 1D processing/plotting code as examples instead of black box scripts. [Dec 3, 2019]
+- Convert this into a python package instead of a set of scripts with separate main functions that require input. 
