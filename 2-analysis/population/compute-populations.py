@@ -65,6 +65,12 @@ def get_populations(ics, tgrid, datadir, nstates):
 
             interp_pop = interpolate(tgrid, time_steps, populations)
             interp_populations['%s' %tbf_key] = interp_pop
+
+    print('Total number of TBFs:')
+    print('  Number of ICs: ', len(ics))
+    print('  Total number of TBFs: ', np.sum([ len(states[key]) for key in states.keys() ]))
+    for state_key in states.keys():
+        print('  Number of %s TBFs: %d' %(state_key.title(), len(states[state_key])))
     
     avg_populations = {}
     state_populations = {}
@@ -117,7 +123,7 @@ Specify the time grid and ICs to use.
 Can use a coarser time grid than is used here and it shouldn't change the result.
 '''
 datadir = '../../1-collect-data/data/'
-tgrid = np.arange(0, 300, 5) # edit the last number to change the grid spacing
+tgrid = np.arange(0, 250, 5) # edit the last number to change the grid spacing
 fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
 ics = fmsinfo['ics']
 nstates = fmsinfo['nstates']

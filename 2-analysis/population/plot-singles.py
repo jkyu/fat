@@ -43,7 +43,7 @@ for idx in range(len(ics)):
     else:
         plt.plot(tgrid, single, linewidth=0.8, linestyle='--')
 plt.plot(tgrid, avg_pop, color='firebrick', linewidth=2.0, label='Full wavepacket')
-plt.axis([0, 250, 0, 1.03])
+plt.axis([tgrid[0], tgrid[-1], 0, 1.03])
 plt.legend(loc='best', fontsize=ticksize)
 plt.xlabel('Time [fs]', fontsize=labelsize)
 plt.ylabel('Excited State Population', fontsize=labelsize)
