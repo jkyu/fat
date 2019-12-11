@@ -1,7 +1,6 @@
 import os
 import sys
 import numpy as np
-import mdtraj as md
 import pickle
 import matplotlib.pyplot as plt
 
@@ -39,7 +38,17 @@ def interpolate(grid, tsteps, data):
 
     return interp_data
 
-def compute_bla(ics, tgrid, datadir, single_index, double_index):
+def compute_distance(frame, bl_inds):
+
+    atom1 = frame[bl_inds[0]]
+    atom2 = frame[bl_inds[1]]
+
+    v12 = atom2 - atom1
+    distance = np.linalg.norm(v12)
+
+    return distance
+
+def process_trajectories(ics, tgrid, datadir, single_index, double_index):
     '''
     Load the fat data file and collect the spawn information.
     Gather the value of the dihedral angles from the trajectories.
@@ -56,6 +65,7 @@ def compute_bla(ics, tgrid, datadir, single_index, double_index):
     double_names = [x for x in double_index.keys()]
     double_list  = [ double_index[x] for x in double_names ]
 
+    ''' Compute bond lengths for specified single and double bonds '''
     for ic in ics:
         data = pickle.load(open(datadir + ('/%04d.pickle' %ic), 'rb'))
         for tbf_key in data.keys():
@@ -63,20 +73,42 @@ def compute_bla(ics, tgrid, datadir, single_index, double_index):
             print(tbf_key)
             tbf = data[tbf_key]
 
-            # ic = tbf['initcond']
             time_steps = tbf['time_steps']
             trajectory = tbf['trajectory']
 
-            singles = md.compute_distances(trajectory, single_list) * 10.
-            doubles = md.compute_distances(trajectory, double_list) * 10.
+            singles_dict = {}
+            for single_name, single_inds in zip(single_names, single_list):
+                singles_traj = []
+                ''' Compute the dihedral angle for each frame. '''
+                for i in range(len(trajectory)):
+                    frame = trajectory.xyz[i] * 10.
+                    single_bl = compute_distance(frame, single_inds)
+                    singles_traj.append(single_bl)
+                singles_dict[single_name] = np.array(singles_traj)
+
+            doubles_dict = {}
+            for double_name, double_inds in zip(double_names, double_list):
+                doubles_traj = []
+                ''' Compute the dihedral angle for each frame. '''
+                for i in range(len(trajectory)):
+                    frame = trajectory.xyz[i] * 10.
+                    double_bl = compute_distance(frame, double_inds)
+                    doubles_traj.append(double_bl)
+                doubles_dict[double_name] = np.array(doubles_traj)
 
             bla = np.zeros_like(time_steps)
+            singles = np.zeros((len(time_steps), len(single_names)))
+            doubles = np.zeros((len(time_steps), len(double_names)))
+            for i, single_name in enumerate(single_names):
+                singles[:,i] = singles_dict[single_name]
+            for i, double_name in enumerate(double_names):
+                doubles[:,i] = doubles_dict[double_name]
             for t in range(len(time_steps)):
                 bla[t] = np.mean(singles[t,:] - doubles[t,:])
 
             raw_tsteps['%s' %tbf_key] = time_steps
-            raw_singles['%s' %tbf_key] = singles
-            raw_doubles['%s' %tbf_key] = doubles
+            raw_singles['%s' %tbf_key] = singles_dict
+            raw_doubles['%s' %tbf_key] = doubles_dict
             raw_blas['%s' %tbf_key] = bla
 
     '''
@@ -93,27 +125,26 @@ def compute_bla(ics, tgrid, datadir, single_index, double_index):
     print('Aggregating single bonds in time by interpolating.')
     for tbf_key in raw_singles.keys():
         blens_dict = {}
-        for bond_idx in range(len(single_names)):
+        for bond_idx, single_name in enumerate(single_names):
             tsteps = raw_tsteps[tbf_key]
-            blens = raw_singles[tbf_key][:,bond_idx]    # get lengths for named bond for each IC
+            blens = raw_singles[tbf_key][single_name]    # get lengths for named bond for each IC
             interp_blens = interpolate(tgrid, tsteps, blens)
-            blens_dict[single_names[bond_idx]] = interp_blens
+            blens_dict[single_name] = interp_blens
         interp_singles[tbf_key] = blens_dict
 
     print('Aggregating double bonds in time by interpolating.')
     for tbf_key in raw_doubles.keys():
         blens_dict = {}
-        for bond_idx in range(len(single_names)):
+        for bond_idx, double_name in enumerate(double_names):
             tsteps = raw_tsteps[tbf_key]
-            blens = raw_doubles[tbf_key][:,bond_idx]    # get lengths for named bond for each IC
+            blens = raw_doubles[tbf_key][double_name]    # get lengths for named bond for each IC
             interp_blens = interpolate(tgrid, tsteps, blens)
-            blens_dict[double_names[bond_idx]] = interp_blens
+            blens_dict[double_name] = interp_blens
         interp_doubles[tbf_key] = blens_dict
 
     print('Aggregating bond length alternation in time by interpolating.')
     for tbf_key in raw_blas.keys():
         interp_blas[tbf_key] = interpolate(tgrid, raw_tsteps[tbf_key], raw_blas[tbf_key])
-    print(interp_blas)
 
     print('Averaging single bond lengths per IC')
     avg_singles = {}
@@ -172,4 +203,4 @@ datadir = '../../1-collect-data/data/'
 fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
 ics = fmsinfo['ics']
 nstates = fmsinfo['nstates']
-compute_bla(ics, tgrid, datadir, single_index, double_index)
+process_trajectories(ics, tgrid, datadir, single_index, double_index)
