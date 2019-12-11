@@ -115,6 +115,7 @@ def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_con
                 configuration in order to track directionality and handle wrapping appropriately. '''
                 if start_config=='trans':
                     dihes_traj = [x + 360 if x < 0 else x for x in dihes_traj]
+                    dihes_dict[dihe_name] = np.array(dihes_traj)
                 else: 
                     dihes_dict[dihe_name] = np.array(dihes_traj)
 
