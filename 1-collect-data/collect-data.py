@@ -187,7 +187,7 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
 
     return tbf_data
 
-def collect_tbfs(initconds, dirlist, prmtop, initstate):
+def collect_tbfs(initconds, dirlist, prmtop, initstate, write_fmsinfo=True):
     '''
     Gather TBFs in MDTraj and dump to disk to make subsequent analyses faster. 
     '''
@@ -242,6 +242,7 @@ def collect_tbfs(initconds, dirlist, prmtop, initstate):
     ics.sort()
     simulation_data['ics'] = ics
     simulation_data['nstates'] = tbf_data['nstates']
+    if write_fmsinfo:
     with open('./data/fmsinfo.pickle', 'wb') as handle:
         pickle.dump(simulation_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -253,4 +254,7 @@ for ic in ics:
     dirlist['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
 topfile = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
 initstate = 1 # we start on S1 for this system. All of my stored data is 0-indexed starting from the ground state. 
-collect_tbfs(ics, dirlist, topfile, initstate)
+collect_tbfs(ics, dirlist, topfile, initstate, write_fmsinfo=True)
+# set write_fmsinfo to False to avoid dumping out the fmsinfo file that contains
+# overall dynamics information, like IC labels, nstates, etc. Helpful if you
+# only want to process one simulation without clobbering a previous fmsinfo file.
