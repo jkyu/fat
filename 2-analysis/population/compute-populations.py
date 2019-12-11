@@ -51,20 +51,24 @@ def get_populations(ics, tgrid, datadir, nstates):
 
     ''' Grab population information out of all ICs and bin that onto a uniform time step time grid (passed in as tgrid) '''
     for ic in ics:
+        ic_tfinal = 0
         data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
         for tbf_key in data.keys():
 
             tbf = data[tbf_key]
             state_id = tbf['state_id']
-            print('%s, state s%d' %(tbf_key, state_id))
+            # print('%s, state s%d' %(tbf_key, state_id))
 
             states['s%d' %state_id].append(tbf_key)
 
             time_steps = tbf['time_steps']
+            if time_steps[-1] > ic_tfinal:
+                ic_tfinal = time_steps[-1]
             populations = tbf['populations']
 
             interp_pop = interpolate(tgrid, time_steps, populations)
             interp_populations['%s' %tbf_key] = interp_pop
+        print('IC %04d final time step: %f' %(ic, ic_tfinal))
 
     print('Total number of TBFs:')
     print('  Number of ICs: ', len(ics))
