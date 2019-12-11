@@ -243,8 +243,8 @@ def collect_tbfs(initconds, dirlist, prmtop, initstate, write_fmsinfo=True):
     simulation_data['ics'] = ics
     simulation_data['nstates'] = tbf_data['nstates']
     if write_fmsinfo:
-    with open('./data/fmsinfo.pickle', 'wb') as handle:
-        pickle.dump(simulation_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        with open('./data/fmsinfo.pickle', 'wb') as handle:
+            pickle.dump(simulation_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 ics = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 27, 35, 44, 55, 64, 68, 76, 81]
 ics = ics + [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
