@@ -1,7 +1,6 @@
 import os
 import sys
 import numpy as np
-import mdtraj as md
 import pickle
 import matplotlib.pyplot as plt
 
@@ -44,7 +43,29 @@ def interpolate(grid, tsteps, data, do_state_specific=False):
 
     return interp_data
 
-def compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_state_specific=False):
+def compute_dihedral(frame, dihe_inds):
+
+    atom1 = frame[dihe_inds[0]]
+    atom2 = frame[dihe_inds[1]]
+    atom3 = frame[dihe_inds[2]]
+    atom4 = frame[dihe_inds[3]]
+
+    v12 = atom2 - atom1
+    v23 = atom3 - atom2
+    v34 = atom4 - atom3
+    v12 = v12 / np.linalg.norm(v12)
+    v23 = v23 / np.linalg.norm(v23)
+    v34 = v34 / np.linalg.norm(v34)
+
+    n1 = np.cross(v12, v23)
+    n2 = np.cross(v23, v34) 
+    x = np.dot(n1, n2)
+    y = np.dot(np.cross(n1, v23), n2)
+    dihedral_angle = np.arctan2(y,x) * 180./np.pi
+
+    return dihedral_angle
+
+def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, do_state_specific=False):
     '''
     Load the fat data file and collect the spawn information.
     Gather the value of the dihedral angles from the trajectories.
@@ -61,6 +82,7 @@ def compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_state_spe
     raw_pops = {}
     state_ids = {}
 
+    ''' Compute the dihedral angles. The data dictionary is indexed as IC -> TBF Key -> Dihedral Name -> Frame Number '''
     for ic in ics:
         data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
         for tbf_key in data.keys():
@@ -74,9 +96,23 @@ def compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_state_spe
             trajectory = tbf['trajectory']
             populations = tbf['populations']
 
-            dihedrals = md.compute_dihedrals(trajectory, dihedral_list)
+            dihes_dict = {}
+            for dihe_name, dihe_inds in zip(dihedral_names, dihedral_list):
+                dihes_traj = []
+                ''' Compute the dihedral angle for each frame. '''
+                for i in range(len(trajectory)):
+                    frame = trajectory.xyz[i] * 10.
+                    dihe_angle = compute_dihedral(frame, dihe_inds)
+                    ''' Handle the wrapping over/under +/-180 degrees. '''
+                    if i>0:
+                        if (dihe_angle -  dihes_traj[i-1]) > 300:
+                            dihe_angle = dihe_angle - 360
+                        elif (dihe_angle - dihes_traj[i-1]) < -300:
+                            dihe_angle = dihe_angle + 360
+                    dihes_traj.append(dihe_angle)
+                dihes_dict[dihe_name] = np.array(dihes_traj)
 
-            raw_angles['%s' %tbf_key] = dihedrals
+            raw_angles['%s' %tbf_key] = dihes_dict
             raw_tsteps['%s' %tbf_key] = time_steps
             raw_pops['%s' %tbf_key] = populations
 
@@ -96,13 +132,7 @@ def compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_state_spe
         zeroed_dict = {}
         for dihe_idx, dihe_name in enumerate(dihedral_names):
             tsteps = raw_tsteps[tbf_key]
-            dihes = raw_angles[tbf_key][:,dihe_idx]      # angle values of named dihedrals for each IC
-            dihes = dihes * 180.0 / np.pi
-            for i in range(1, len(dihes)):
-                if (dihes[i] -  dihes[i-1]) > 300:
-                    dihes[i] = dihes[i] - 360
-                elif (dihes[i] - dihes[i-1]) < -300:
-                    dihes[i] = dihes[i] + 360
+            dihes = raw_angles[tbf_key][dihe_name]      # angle values of named dihedrals for each IC
             interp_dihes = interpolate(tgrid, tsteps, dihes, do_state_specific=do_state_specific)
             dihes_dict[dihe_name] = interp_dihes
 
@@ -132,16 +162,16 @@ def compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_state_spe
 
 '''
 The following dihedral angles are enumerated and indexed according
-to the geometry file so that we can use mdtraj to compute the
-dihedral angles. Pass this dictionary into compute_dihedrals()
+to the geometry file so that we can compute the dihedral angles.
+Pass this dictionary into compute_dihedrals()
 '''
 print('Indexing dihedral angles.')
 dihedral_index = {}
-dihedral_index['HCCH'] = [0, 4, 5, 3]
+dihedral_index['HCCH'] = [2, 5, 4, 0]
 
 tgrid = np.arange(0, 250, 5)
 datadir = '../../1-collect-data/data/'
 fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
 ics = fmsinfo['ics']
 nstates = fmsinfo['nstates']
-compute_dihedrals(ics, tgrid, datadir, nstates, dihedral_index, do_state_specific=False)
+process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, do_state_specific=False)

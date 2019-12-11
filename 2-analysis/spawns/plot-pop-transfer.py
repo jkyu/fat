@@ -92,7 +92,7 @@ def plot_pop_transfer_energy_gap(tp_pops, eth_pops, tp_gaps, eth_gaps):
 
     # Since our bins start at an energy gap of 0 eV and have a max of <1 eV
     # can just multiply by 10 to get index of the array to add the population
-    # transferred
+    # transferred. This means the bins have a spacing of 0.1 eV
     for pop, gap in zip(tp_pops, tp_gaps):
         tp_bins[int(np.floor(gap*10))] += pop 
     for pop, gap in zip(eth_pops, eth_gaps):
@@ -110,8 +110,8 @@ def plot_pop_transfer_energy_gap(tp_pops, eth_pops, tp_gaps, eth_gaps):
     plt.rc('xtick',labelsize=ticksize)
     plt.rc('ytick',labelsize=ticksize)
 
-    width = 0.35
-    x_labels = np.arange(nbins)
+    width = 0.035
+    x_labels = np.arange(nbins)*0.1
     tp_bars = plt.bar(x_labels - width/2, tp_bins/total_pop_transfer, width, label='Twisted-Pyramidalized CI', color='darkslateblue')
     eth_bars = plt.bar(x_labels + width/2, eth_bins/total_pop_transfer, width, label='H-Migration CI', color='mediumvioletred')
 
