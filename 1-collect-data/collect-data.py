@@ -72,7 +72,7 @@ def get_energies(enfile):
 
     return time_steps_au, data, nstates
 
-def get_transition_dipoles(tdipfile):
+def get_transition_dipoles(tdipfile, nstates):
     '''
     Parse TDip.x file to pull out transition dipoles between
     S0 and S1 for each time step. We record the time step
@@ -84,25 +84,30 @@ def get_transition_dipoles(tdipfile):
     the ground state and the excited states labeled Mag.n in the 
     header, with n indicating the excited state (1-indexed). 
     So Mag.2 indicates the magnitude of the transition dipole between 
-    states 1 and 2, which are S0 and S1 respectively.
-    It should be that only S1 matters when computing fluorescence,
-    so only Mag.2 is collected. 
+    states 1 and 2, which are S0 and S1 respectively. 
+    The transition_dipoles dictionary is indexed by the state label of the
+    excited state and only includes transitions between the ground and 
+    excited states, since that is FMS provides. 
     '''
     time_steps_au = []
-    transition_dipoles = []
+    transition_dipoles = {}
     with open(tdipfile, 'rb') as f:
         _ = f.readline() # header line to get rid of
-        for line in f: 
+        # header = f.readline() # header line
+        # nstates = int((len(header.split()) - 1)//4)
+        for i in range(0, nstates):
+            transition_dipoles['s%d' %i] = []
+        for line in f:
             a = line.split()
-            time_step_au = float(a[0])
-            tdip = float(a[1])
-            time_steps_au.append(time_step_au)
-            transition_dipoles.append(tdip)
-
+            time_steps_au.append(float(a[0]))
+            for i in range(0, nstates):
+                transition_dipoles['s%d' %i].append(float(a[i+1]))
+    data = {}
+    for key in transition_dipoles.keys():
+        data[key] = np.array(transition_dipoles[key])
     time_steps_au = np.array(time_steps_au)
-    transition_dipoles = np.array(transition_dipoles)
 
-    return time_steps_au, transition_dipoles
+    return time_steps_au, data
 
 def get_spawn_info(dirname, ic):
 
@@ -162,7 +167,7 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
     trajectory = get_positions(xyzfile, prmtop)
     time_steps, populations = get_populations(popfile)
     _, energies, nstates = get_energies(enfile)
-    _, transition_dipoles = get_transition_dipoles(tdipfile)
+    _, transition_dipoles = get_transition_dipoles(tdipfile, nstates)
 
     # Catch for staggered array sizes due to running simulations.
     if not len(time_steps) == len(trajectory):
@@ -247,5 +252,5 @@ dirlist = {}
 for ic in ics:
     dirlist['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
 topfile = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
-initstate = 1 # we start on S1 for this system. All of my stored data is 0-indexed for state number.
+initstate = 1 # we start on S1 for this system. All of my stored data is 0-indexed starting from the ground state. 
 collect_tbfs(ics, dirlist, topfile, initstate)

@@ -61,6 +61,6 @@ def plot(dihedral_data):
     plt.close()
 
 rcParams.update({'figure.autolayout': True})
-dihedral_data = pickle.load(open('../dihedrals/data/dihedrals.pickle', 'rb'))
+dihedral_data = pickle.load(open('./data/dihedrals.pickle', 'rb'))
 
 plot(dihedral_data)

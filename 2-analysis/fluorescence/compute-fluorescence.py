@@ -52,7 +52,7 @@ def compute_intensity(en_gap, populations, transition_dipoles):
 
 ## Functions that actually do stuff and get called by main
 
-def compute_fluorescence(initconds, tgrid, wgrid, datadir):
+def compute_fluorescence(initconds, tgrid, wgrid, datadir, ex_state=1, outfile_name='fluorescence'):
 
     npoints = len(tgrid)
     interp_grid = tgrid - tgrid[0] # zeros the grid for interpolation
@@ -60,52 +60,33 @@ def compute_fluorescence(initconds, tgrid, wgrid, datadir):
 
     egrid = np.array([ 1240./x for x in wgrid ])
 
-    s1_tbf_data = {}
+    tbf_data = {}
 
-    print('Loading all trajectories and collecting data for TBFs on S1.')
+    print('Loading all trajectories and collecting data for TBFs on excited state (ex_state variable)')
     for ic in initconds:
-        print(ic)
+        print('Computing S%d fluorescence signal from FMS simulation %d' %(ex_state, ic))
         data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
         for tbf_key in data.keys():
             
             tbf = data[tbf_key]
             state_id = tbf['state_id']
 
-            if state_id==1: # TBF must be on S1 to be considered for fluorescence.
+            if state_id==ex_state: # 0-indexed. e.g., ex_state=1 is fluorescence from S1
                 print('Computing fluorescence signal from TBF %s' %tbf_key)
                 time_steps = tbf['time_steps']
                 populations = tbf['populations']
-                s0_energies = tbf['energies']['s0']
-                s1_energies = tbf['energies']['s1']
-                transition_dipoles = tbf['transition_dipoles']
+                ground_energies = tbf['energies']['s0']
+                excited_energies = tbf['energies']['s%d' %ex_state]
+                transition_dipoles = tbf['transition_dipoles']['s%d' %ex_state]
 
-                en_gap = s1_energies - s0_energies # atomic units used in fluorescence calculation
+                en_gap = excited_energies - ground_energies # atomic units used in fluorescence calculation
                 intensities = compute_intensity(en_gap, populations, transition_dipoles)
                 interp_intensities = interpolate(interp_grid, time_steps, en_gap)
                 interp_gaps = interpolate(interp_grid, time_steps, en_gap) * 27.21138602
                 # ic_fl = approx_fluorescence(egrid, tgrid, interp_gaps, interp_intensities)
                 ic_fl = convolve(egrid, tgrid, interp_gaps, interp_grid, interp_intensities)
-                s1_tbf_data[tbf_key] = ic_fl
+                tbf_data[tbf_key] = ic_fl
                 fl_grid = fl_grid + ic_fl
-
-        # data = pickle.load(open(datadir+('/%02d.pickle' %ic), 'rb'))
-        # tbf = data[ex_key]
-
-        # time_steps  = tbf['time_steps']
-        # populations = tbf['populations']
-        # s0_energies = tbf['energies']['s0'] # * 27.21138602
-        # s1_energies = tbf['energies']['s1'] # * 27.21138602
-        # transition_dipoles = tbf['transition_dipoles']
-
-        # en_gap = s1_energies - s0_energies # energies computed using atomic units
-        # intensities = compute_intensity(en_gap, populations, transition_dipoles)
-
-        # interp_intensities = interpolate(interp_grid, time_steps, intensities)
-        # interp_gaps = interpolate(interp_grid, time_steps, en_gap) * 27.21138602
-        # # ic_fl = approx_fluorescence(en_grid, t_grid, interp_gaps, interp_intensities)
-        # ic_fl = convolve(en_grid, t_grid, interp_gaps, interp_grid, interp_intensities)
-        # tbf_data[ex_key] = ic_fl
-        # fl_grid = fl_grid + ic_fl
 
     print('Normalizing fluorescence spectrum.')
     fl_grid = fl_grid / np.max(fl_grid)
@@ -116,12 +97,12 @@ def compute_fluorescence(initconds, tgrid, wgrid, datadir):
     data['egrid'] = egrid
     data['wgrid'] = wgrid
     data['fluorescence'] = fl_grid
-    data['tbf_fluorescence'] = s1_tbf_data
+    data['tbf_fluorescence'] = tbf_data
 
     print('Saving fluorescence data.')
     if not os.path.isdir('./data/'):
         os.mkdir('./data/')
-    with open('./data/fluorescence.pickle', 'wb') as handle:
+    with open('./data/%s.pickle' %outfile_name, 'wb') as handle:
         pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 def approx_fluorescence(egrid, tgrid, en_gap, intens):
@@ -193,4 +174,6 @@ if __name__=='__main__':
     npoints = 201
     tgrid  = np.linspace(-90., 260., npoints)
     wgrid = np.linspace(100, 1140, npoints)
-    compute_fluorescence(ics, tgrid, wgrid, datadir)
+    ex_state = 1 # S1-S0 fluorescence. ex_state is 0 indexed, so S1 is ex_state=1
+    outfile_name = 'fluorescence' # name of the pickle file saved to the data directory
+    compute_fluorescence(ics, tgrid, wgrid, datadir, ex_state=ex_state, outfile_name=outfile_name)
