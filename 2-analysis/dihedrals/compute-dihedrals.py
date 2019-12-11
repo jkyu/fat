@@ -65,7 +65,7 @@ def compute_dihedral(frame, dihe_inds):
 
     return dihedral_angle
 
-def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, do_state_specific=False):
+def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_config='cis', do_state_specific=False):
     '''
     Load the fat data file and collect the spawn information.
     Gather the value of the dihedral angles from the trajectories.
@@ -110,7 +110,13 @@ def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, do_state_
                         elif (dihe_angle - dihes_traj[i-1]) < -300:
                             dihe_angle = dihe_angle + 360
                     dihes_traj.append(dihe_angle)
-                dihes_dict[dihe_name] = np.array(dihes_traj)
+                ''' If the simulation tracks a trans->cis isomerization, we want our angle range to be [0,2pi].
+                For cis->trans, we want the angle range to be [-pi,pi]. We want to be centered at our start 
+                configuration in order to track directionality and handle wrapping appropriately. '''
+                if start_config=='trans':
+                    dihes_traj = [x + 360 if x < 0 else x for x in dihes_traj]
+                else: 
+                    dihes_dict[dihe_name] = np.array(dihes_traj)
 
             raw_angles['%s' %tbf_key] = dihes_dict
             raw_tsteps['%s' %tbf_key] = time_steps
@@ -174,4 +180,5 @@ datadir = '../../1-collect-data/data/'
 fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
 ics = fmsinfo['ics']
 nstates = fmsinfo['nstates']
-process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, do_state_specific=False)
+start_config = 'cis'
+process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_config, do_state_specific=False)
