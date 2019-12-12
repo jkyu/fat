@@ -150,6 +150,9 @@ def integrate_fluorescence_time(fl, wgrid, tgrid):
 
 def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescence', compute_shift=False, tshift=0):
 
+    print('Normalizing the fluorescence signal.')
+    fl = fl / np.max(fl)
+
     ''' Optional flag for computing the energy shift to match the fluorescence maximum of
     the experimental data by comparing steady state fluorescence spectra. '''
     if compute_shift:

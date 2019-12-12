@@ -88,9 +88,6 @@ def compute_fluorescence(initconds, tgrid, wgrid, datadir, ex_state=1, outfile_n
                 tbf_data[tbf_key] = ic_fl
                 fl_grid = fl_grid + ic_fl
 
-    print('Normalizing fluorescence spectrum.')
-    fl_grid = fl_grid / np.max(fl_grid)
-
     data = {}
     data['ics'] = ics
     data['tgrid'] = tgrid

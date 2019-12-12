@@ -33,7 +33,9 @@ def plot_fluorescence(fl_data, fl_shift, wgrid, tgrid, figname='2D-fluorescence'
     yticks = np.arange(0, ngrid, ngrid//5)
     ylabels = ['%d' %int(k) for k in wgrid[yticks]]
 
+    print('Normalizing the fluorescence signal')
     fl2 = fl.T
+    fl2 =  fl2 / np.max(fl2)
 
     ''' 
     Custom color map taken by extracting RGB values from Schmidt 2005 figure 1
