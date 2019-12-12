@@ -26,7 +26,7 @@ def smooth_data(x, y, npoints):
 
     return xnew, ynew 
 
-def plot(bla_data, do_smoothing=False):
+def plot(bla_data, figname='avg-bla', do_smoothing=False):
 
     '''
     Plot excited state trajectories
@@ -65,10 +65,9 @@ def plot(bla_data, do_smoothing=False):
     plt.legend(loc='best', frameon=False, fontsize=ticksize)
     if not os.path.isdir('./figures'):
         os.mkdir('./figures')
-    plt.savefig('./figures/avg-bla.pdf', dpi=300)
-    plt.savefig('./figures/avg-bla.png', dpi=300)
+    plt.savefig('./figures/%s.pdf' %figname, dpi=300)
 
 rcParams.update({'figure.autolayout': True})
 bla_data = pickle.load(open('./data/bla.pickle', 'rb'))
-
-plot(bla_data)
+figname = 'avg-bla'
+plot(bla_data, figname=figname)

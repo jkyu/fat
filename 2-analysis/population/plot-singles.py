@@ -50,5 +50,5 @@ plt.ylabel('Excited State Population', fontsize=labelsize)
 
 if not os.path.isdir('./figures/'):
     os.mkdir('./figures/')
-plt.savefig('figures/singles.png')
+plt.savefig('figures/singles.pdf', dpi=300)
 

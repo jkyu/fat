@@ -148,7 +148,7 @@ def integrate_fluorescence_time(fl, wgrid, tgrid):
 
     return fl_1D, egrid
 
-def run(fl, fl_error, wgrid, tgrid, slice_wls, compute_shift=False, tshift=0):
+def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescence', compute_shift=False, tshift=0):
 
     ''' Optional flag for computing the energy shift to match the fluorescence maximum of
     the experimental data by comparing steady state fluorescence spectra. '''
@@ -236,7 +236,7 @@ def run(fl, fl_error, wgrid, tgrid, slice_wls, compute_shift=False, tshift=0):
     plt.tight_layout()
     if not os.path.isdir('./figures/'):
         os.mkdir('./figures/')
-    plt.savefig('./figures/time-resolved-fluorescence.pdf')
+    plt.savefig('./figures/%s.pdf' %figname, dpi=300)
 
 
 ''' Gather data from our computed 2D fluorescence spectrum. '''
@@ -246,4 +246,5 @@ tgrid = fl_data['tgrid']
 fl    = fl_data['fluorescence']
 fl_error = pickle.load(open('./data/fl-error.pickle', 'rb'))
 slice_wls = [650, 800]
-run(fl, fl_error, wgrid, tgrid, slice_wls)
+figname = 'time-resolved-fluorescence'
+run(fl, fl_error, wgrid, tgrid, slice_wls, figname=figname)

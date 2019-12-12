@@ -15,7 +15,7 @@ This uses a fluorescence shift that should be computed in the
 output of plot-time-resolved.py and saved to ./data/fl_shift.txt
 '''
 
-def plot_fluorescence(fl_data, fl_shift, wgrid, tgrid, lineout=False):
+def plot_fluorescence(fl_data, fl_shift, wgrid, tgrid, figname='2D-fluorescence', lineout=False):
     '''
     Here, we think about time as x and energy as y. It turns out that in
     the fluorescence 2D array, each row corresponds to a specific time 
@@ -70,8 +70,7 @@ def plot_fluorescence(fl_data, fl_shift, wgrid, tgrid, lineout=False):
     plt.tight_layout()
     if not os.path.isdir('./figures/'):
         os.mkdir('./figures/')
-    plt.savefig('./figures/2D-fluorescence.pdf')
-    plt.savefig('./figures/2D-fluorescence.png')
+    plt.savefig('./figures/%s.pdf' %figname, dpi=300)
     plt.close()
 
 if os.path.isfile('./data/fl_shift.txt'):
@@ -81,4 +80,5 @@ fl_data = pickle.load(open('./data/fluorescence.pickle', 'rb'))
 wgrid = fl_data['wgrid']
 tgrid = fl_data['tgrid']
 fl    = fl_data['fluorescence']
-plot_fluorescence(fl, fl_shift, wgrid, tgrid)
+figname = '2D-fluorescence'
+plot_fluorescence(fl, fl_shift, wgrid, tgrid, figname=figname)

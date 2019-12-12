@@ -14,7 +14,7 @@ so unless the allowed rotations are constrained by the system or I do something
 to deal with the periodicity (really, how to automate describing the twists always
 in one direction), the dihedral angle will average to around 0 with enough TBFs. '''
 
-def plot(dihedral_data):
+def plot(dihedral_data, figname='avg-dihedrals'):
 
     tbf_keys = dihedral_data['tbf_keys']
 
@@ -57,10 +57,10 @@ def plot(dihedral_data):
 
     if not os.path.isdir('./figures'):
         os.mkdir('./figures')
-    plt.savefig('./figures/avg-dihedrals.png', dpi=300)
+    plt.savefig('./figures/%s.pdf' %figname, dpi=300)
     plt.close()
 
 rcParams.update({'figure.autolayout': True})
 dihedral_data = pickle.load(open('./data/dihedrals.pickle', 'rb'))
-
-plot(dihedral_data)
+figname = 'avg-dihedrals'
+plot(dihedral_data, figname=figname)

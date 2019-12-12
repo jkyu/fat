@@ -56,7 +56,7 @@ def plot(ic, dihedral_data, nstates):
 
     if not os.path.isdir('./figures'):
         os.mkdir('./figures')
-    plt.savefig('./figures/%04d.png' %ic)
+    plt.savefig('./figures/%04d.pdf' %ic, dpi=300)
     plt.close()
 
 rcParams.update({'figure.autolayout': True})
