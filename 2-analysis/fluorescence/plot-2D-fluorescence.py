@@ -15,7 +15,7 @@ This uses a fluorescence shift that should be computed in the
 output of plot-time-resolved.py and saved to ./data/fl_shift.txt
 '''
 
-def plot_fluorescence(fl_data, fl_shift, lineout=False):
+def plot_fluorescence(fl_data, fl_shift, wgrid, tgrid, lineout=False):
     '''
     Here, we think about time as x and energy as y. It turns out that in
     the fluorescence 2D array, each row corresponds to a specific time 
@@ -24,11 +24,8 @@ def plot_fluorescence(fl_data, fl_shift, lineout=False):
     energy is on the x-axis if we use the array as a plot. So we need
     to transpose this array. 
     '''
-    wgrid = fl_data['wgrid']
-    egrid = fl_data['egrid']
-    tgrid = fl_data['tgrid']
+    egrid = np.array([1240./x for x in wgrid])
     ngrid = len(tgrid)
-    fl    = fl_data['fluorescence']
 
     t0 = np.argmin(np.abs(0 - tgrid))
     xticks = np.arange(t0, ngrid, ngrid//5)
@@ -77,8 +74,11 @@ def plot_fluorescence(fl_data, fl_shift, lineout=False):
     plt.savefig('./figures/2D-fluorescence.png')
     plt.close()
 
-fl_data = pickle.load(open('./data/fluorescence.pickle', 'rb'))
 if os.path.isfile('./data/fl_shift.txt'):
     fl_shift = np.loadtxt('./data/fl_shift.txt')
 else: fl_shift = 0
-plot_fluorescence(fl_data, fl_shift)
+fl_data = pickle.load(open('./data/fluorescence.pickle', 'rb'))
+wgrid = fl_data['wgrid']
+tgrid = fl_data['tgrid']
+fl    = fl_data['fluorescence']
+plot_fluorescence(fl, fl_shift, wgrid, tgrid)

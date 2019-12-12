@@ -62,7 +62,7 @@ def compute_fluorescence(initconds, tgrid, wgrid, datadir, ex_state=1, outfile_n
 
     tbf_data = {}
 
-    print('Loading all trajectories and collecting data for TBFs on excited state (ex_state variable)')
+    print('Loading all trajectories and collecting data for TBFs on excited state S%d' %ex_state) 
     for ic in initconds:
         print('Computing S%d fluorescence signal from FMS simulation %d' %(ex_state, ic))
         data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
