@@ -162,7 +162,7 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
 
     # Handles the case where there is no TBF data despite a spawning point.
     if not os.path.isfile(popfile):
-        return None
+        raise Exception('Directory for this IC does not have FMS outputs to process.')
 
     trajectory = get_positions(xyzfile, prmtop)
     time_steps, populations = get_populations(popfile)
