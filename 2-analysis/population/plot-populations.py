@@ -41,7 +41,7 @@ def plot_populations(pop_data, figname='population', do_fit=False, target_fit_st
         label = '%s population' %key
         plt.errorbar(tgrid, populations[key], yerr=errors[key], color=colors[i], linewidth=3.0, elinewidth=1, ecolor=ecolors[i], capsize=0.1, label=label.title())
     if do_fit:
-        popt, pcov = curve_fit(exp_func, tgrid, populations['s%d'] %target_fit_state, absolute_sigma=False)
+        popt, pcov = curve_fit(exp_func, tgrid, populations['s%d' %target_fit_state], absolute_sigma=False)
         print('Exponential fit. Tau = ', popt[1])
         fit = exp_func(tgrid, *popt)
         if os.path.isfile('./data/fit_error.npz'):
