@@ -211,7 +211,7 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False):
         time_steps = np.concatenate([time_steps, time_steps_extension[1:]])
         populations_extension = np.zeros_like(time_steps)
         populations_extension[:len(populations)] = populations
-        populations_extension[len(populations):] = np.array([populations[-1]*len(time_steps_extension)])
+        populations_extension[len(populations):] = np.array([[populations[-1]]*(len(time_steps_extension)-1)])
         populations = populations_extension
     
     tbf_data = {}
