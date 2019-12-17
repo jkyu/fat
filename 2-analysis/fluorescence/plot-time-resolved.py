@@ -148,7 +148,12 @@ def integrate_fluorescence_time(fl, wgrid, tgrid):
 
     return fl_1D, egrid
 
-def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescence', compute_shift=False, tshift=0):
+def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescence', compute_shift=False, steady_state_fl_file='./expt-data/steadystate.txt', expt_data_dir='./expt-data/', tshift=0):
+
+    ''' The steady_state_fl_file argument points to reference experimental steady state fluorescence 
+    data in txt format. The expt_data_dir argument points to a directory containing the experimental
+    data containing single wavelength fluorescence traces named by their wavelength.txt. 
+    This needs work, obviously. '''
 
     print('Normalizing the fluorescence signal.')
     fl = fl / np.max(fl)
@@ -157,7 +162,7 @@ def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescen
     the experimental data by comparing steady state fluorescence spectra. '''
     if compute_shift:
         ''' Gather data for comparison to experimental steady state fluorescence '''
-        expt_fl  = np.loadtxt('./expt-data/dobler-fl.txt', delimiter=',') # has a hard coded path
+        expt_fl  = np.loadtxt(steady_state_fl_file, delimiter=',') 
         expt_fl_x, expt_fl_y = process_expt(expt_fl)
         expt_fl_max = find_max(expt_fl_y, expt_fl_x)
 
@@ -178,7 +183,7 @@ def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescen
     expt_slices = []
     # do whatever to load the expt data. just put them into a list, though.
     for wl in slice_wls:
-        expt_raw = np.loadtxt('./expt-data/%d.txt' %wl, delimiter=',')  # hard coded paths
+        expt_raw = np.loadtxt('%s/%d.txt' %(expt_data_dir, wl), delimiter=',')
         expt_t, expt_fl = process_expt_trf(expt_raw)
         expt_slices.append(expt_fl)
 
