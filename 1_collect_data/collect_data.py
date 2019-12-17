@@ -152,7 +152,28 @@ def get_positions(xyzfile, prmtop):
     trajectory = md.load_xyz(xyzfile, prmtop)
     return trajectory
 
-def get_tbf_data(dirname, ic, tbf_id, prmtop):
+def get_extension(extdir, prmtop):
+    '''
+    Read in coordinate information from AIMD extensions for ground state AIMS TBFs.
+    The time grid associated with the extension is comuted from a time step and the
+    number of frames in the extension trajectory. The time step is taken from the
+    terachem input file for the AIMD extensions.
+    '''
+    xyzfile = extdir + 'scr.coord/coors.xyz'
+    trajectory_ext = md.load_xyz(xyzfile, prmtop)
+
+    aimd_input = open(extdir + 'aimd.in', 'r')
+    for line in aimd_input:
+        if 'md_outputfreq' in line:
+            stepfreq = float(line.split()[-1])
+        if 'timestep' in line:
+            tstep = float(line.split()[-1])
+    tstep = stepfreq * tstep
+    tgrid = np.array([x*tstep for x in range(len(trajectory_ext))])
+
+    return tgrid, trajectory_ext
+
+def get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False):
 
     # prmtop   = dirname + '%s.prmtop' % sys_name
     enfile   = dirname + 'PotEn.%d' %tbf_id
@@ -165,14 +186,38 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
         raise Exception('Directory for this IC does not have FMS outputs to process.')
 
     trajectory = get_positions(xyzfile, prmtop)
-    time_steps, populations = get_populations(popfile)
+    time_steps_au, populations = get_populations(popfile)
     _, energies, nstates = get_energies(enfile)
     _, transition_dipoles = get_transition_dipoles(tdipfile, nstates)
+
+    time_steps = time_steps_au * 0.024188425 
 
     # Catch for staggered array sizes due to running simulations.
     if not len(time_steps) == len(trajectory):
         nstep = np.min([len(time_steps), len(trajectory)])
         time_steps = time_steps[:nstep]
+
+    ''' Handling for AIMD extensions of ground state TBFs from the FMS simulations.
+    The coordinates and time steps for the extension trajectory are appended to the 
+    corresponding arrays from the FMS TBFs. The population at the last time point
+    in the FMS TBF is taken to be constant for the entire AIMD extension trajectory
+    and the populations array is extended with this constant value to be the same
+    length as the extended time and position arrays. The energies and transition dipole
+    arrays are not handled here because those are only used in fluorescence calculations,
+    where only excited states are relevant. They don't break anything, since we won't
+    encounter array length mismatches when only excited states are considered. 
+    If this is a problem later for whatever reason, here is a long comment to help with
+    resolving that. '''
+    if os.path.exists(dirname+'ext_%d' %tbf_id) and extensions:
+        extdir = dirname + 'ext_%d/' %tbf_id
+        time_steps_extension, trajectory_extension = get_extension(extdir, prmtop)
+        time_steps_extension = time_steps_extension + time_steps[-1]
+        trajectory = md.join([trajectory, trajectory_extension[1:]])
+        time_steps = np.concatenate([time_steps, time_steps_extension[1:]])
+        populations_extension = np.zeros_like(time_steps)
+        populations_extension[:len(populations)] = populations
+        populations_extension[len(populations):] = np.array([populations[-1]*len(time_steps_extension)])
+        populations = populations_extension
     
     tbf_data = {}
     tbf_data['initcond'] = ic
@@ -180,14 +225,14 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop):
     tbf_data['energies'] = energies
     tbf_data['nstates'] = nstates
     tbf_data['trajectory']  = trajectory
-    tbf_data['time_steps']  = time_steps * 0.024188425
+    tbf_data['time_steps']  = time_steps
     tbf_data['time_steps_au'] = time_steps
     tbf_data['populations'] = populations
     tbf_data['transition_dipoles'] = transition_dipoles
 
     return tbf_data
 
-def collect_tbfs(initconds, dirlist, prmtop, initstate, write_fmsinfo=True):
+def collect_tbfs(initconds, dirlist, prmtop, initstate, write_fmsinfo=True, extensions=False):
     '''
     Gather TBFs in MDTraj and dump to disk to make subsequent analyses faster. 
     '''
@@ -202,7 +247,7 @@ def collect_tbfs(initconds, dirlist, prmtop, initstate, write_fmsinfo=True):
         tbf_id = 1
         print('%04d-%04d' %(ic, tbf_id))
 
-        tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop)
+        tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False)
         tbf_data['spawn_info'] =  None
         tbf_data['state_id'] = initstate
 
@@ -222,7 +267,7 @@ def collect_tbfs(initconds, dirlist, prmtop, initstate, write_fmsinfo=True):
                     tbf_id = spawn['spawn_id']
                     print('%04d-%04d' %(ic, tbf_id))
 
-                    tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop)
+                    tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop, extensions)
                     if not tbf_data==None:
                         tbf_data['spawn_info'] = spawn
                         tbf_data['state_id'] = spawn['spawn_state']
@@ -254,7 +299,7 @@ for ic in ics:
     dirlist['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
 topfile = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
 initstate = 1 # we start on S1 for this system. All of my stored data is 0-indexed starting from the ground state. 
-collect_tbfs(ics, dirlist, topfile, initstate, write_fmsinfo=True)
+collect_tbfs(ics, dirlist, topfile, initstate, write_fmsinfo=True, extensions=True)
 # set write_fmsinfo to False to avoid dumping out the fmsinfo file that contains
 # overall dynamics information, like IC labels, nstates, etc. Helpful if you
 # only want to process one simulation without clobbering a previous fmsinfo file.

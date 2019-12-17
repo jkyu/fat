@@ -65,7 +65,7 @@ def compute_dihedral(frame, dihe_inds):
 
     return dihedral_angle
 
-def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_config='cis', do_state_specific=False):
+def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_config='cis', outfile_name='dihedrals'):
     '''
     Load the fat data file and collect the spawn information.
     Gather the value of the dihedral angles from the trajectories.
@@ -103,21 +103,19 @@ def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_con
                 for i in range(len(trajectory)):
                     frame = trajectory.xyz[i] * 10.
                     dihe_angle = compute_dihedral(frame, dihe_inds)
+                    ''' If the simulation tracks a trans->cis isomerization, we want our angle range to be [0,2pi].
+                    For cis->trans, we want the angle range to be [-pi,pi]. We want to be centered at our start 
+                    configuration in order to track directionality and handle wrapping appropriately. '''
+                    if start_config=='trans' and dihe_angle < 0:
+                        dihe_angle = dihe_angle + 360
                     ''' Handle the wrapping over/under +/-180 degrees. '''
                     if i>0:
-                        if (dihe_angle -  dihes_traj[i-1]) > 300:
+                        if (dihe_angle - dihes_traj[i-1]) > 300:
                             dihe_angle = dihe_angle - 360
                         elif (dihe_angle - dihes_traj[i-1]) < -300:
                             dihe_angle = dihe_angle + 360
                     dihes_traj.append(dihe_angle)
-                ''' If the simulation tracks a trans->cis isomerization, we want our angle range to be [0,2pi].
-                For cis->trans, we want the angle range to be [-pi,pi]. We want to be centered at our start 
-                configuration in order to track directionality and handle wrapping appropriately. '''
-                if start_config=='trans':
-                    dihes_traj = [x + 360 if x < 0 else x for x in dihes_traj]
-                    dihes_dict[dihe_name] = np.array(dihes_traj)
-                else: 
-                    dihes_dict[dihe_name] = np.array(dihes_traj)
+                dihes_dict[dihe_name] = np.array(dihes_traj)
 
             raw_angles['%s' %tbf_key] = dihes_dict
             raw_tsteps['%s' %tbf_key] = time_steps
@@ -129,26 +127,42 @@ def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_con
     TBF name (e.g. 02-03) and then by the specific dihedral angle computed
     (e.g. C12-C13=C14-C15).
     '''
-    interp_dihedrals = {}
-    interp_zeroed = {}
-    interp_populations = {}
 
     print('Aggregating dihedral angles and populations in time by interpolating.')
+    interp_dihedrals = {}
+    interp_populations = {}
     for tbf_key in raw_angles.keys():
         dihes_dict = {}
+        for dihe_idx, dihe_name in enumerate(dihedral_names):
+            tsteps = raw_tsteps[tbf_key]
+            dihes = raw_angles[tbf_key][dihe_name]      # angle values of named dihedrals for each IC
+            interp_dihes = interpolate(tgrid, tsteps, dihes, do_state_specific=False)
+            dihes_dict[dihe_name] = interp_dihes
+
+        interp_populations[tbf_key] = interpolate(tgrid, tsteps, raw_pops[tbf_key], do_state_specific=True)
+        interp_dihedrals[tbf_key] = dihes_dict
+
+    print('Aggregating dihedral angles and populations in time by interpolating for state specific averaging.')
+    interp_zeroed = {}
+    interp_dihedrals2 = {}
+    for tbf_key in raw_angles.keys():
+        dihes_dict2 = {}
         zeroed_dict = {}
         for dihe_idx, dihe_name in enumerate(dihedral_names):
             tsteps = raw_tsteps[tbf_key]
             dihes = raw_angles[tbf_key][dihe_name]      # angle values of named dihedrals for each IC
-            interp_dihes = interpolate(tgrid, tsteps, dihes, do_state_specific=do_state_specific)
-            dihes_dict[dihe_name] = interp_dihes
+            interp_dihes = interpolate(tgrid, tsteps, dihes, do_state_specific=True)
+            if start_config=='trans':
+                interp_dihes = np.abs(180 - interp_dihes) + 180
+            else:
+                interp_dihes = np.abs(0 - interp_dihes)
+            dihes_dict2[dihe_name] = interp_dihes
 
-            dihes_zeroed = interpolate(tgrid, np.array(tsteps) - tsteps[0], dihes, do_state_specific=do_state_specific)
+            dihes_zeroed = interpolate(tgrid, np.array(tsteps) - tsteps[0], dihes, do_state_specific=True)
             zeroed_dict[dihe_name] = dihes_zeroed
 
-        interp_populations[tbf_key] = interpolate(tgrid, tsteps, raw_pops[tbf_key])
         interp_zeroed[tbf_key] = zeroed_dict
-        interp_dihedrals[tbf_key] = dihes_dict
+        interp_dihedrals2[tbf_key] = dihes_dict2
 
     # Cache data
     data2 = {}
@@ -156,6 +170,8 @@ def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_con
     data2['nstates'] = nstates
     data2['dihedral_names'] = dihedral_names
     data2['dihedrals'] = interp_dihedrals
+    data2['dihedrals_state_specific'] = interp_dihedrals2
+    data2['dihedrals_time_zeroed'] = interp_zeroed
     data2['populations'] = interp_populations
     data2['state_ids'] = state_ids
     data2['tbf_keys'] = [x for x in state_ids.keys()]
@@ -164,7 +180,7 @@ def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_con
     print('Dumping interpolated amplitudes to dihedrals.pickle')
     if not os.path.isdir('./data/'):
         os.mkdir('./data/')
-    with open('./data/dihedrals.pickle', 'wb') as handle:
+    with open('./data/%s.pickle' %outfile_name, 'wb') as handle:
         pickle.dump(data2, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 '''
@@ -182,4 +198,5 @@ fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
 ics = fmsinfo['ics']
 nstates = fmsinfo['nstates']
 start_config = 'cis'
-process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_config, do_state_specific=False)
+outfile_name = 'dihedrals'
+process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_config, outfile_name=outfile_name)
