@@ -156,19 +156,14 @@ def get_extension(extdir, prmtop):
     '''
     Read in coordinate information from AIMD extensions for ground state AIMS TBFs.
     The time grid associated with the extension is comuted from a time step and the
-    number of frames in the extension trajectory. The time step is taken from the
-    terachem input file for the AIMD extensions.
+    number of frames in the extension trajectory. The time step is taken as the 
+    terachem default: 0.5 fs. 
     '''
     xyzfile = extdir + 'scr.coord/coors.xyz'
     trajectory_ext = md.load_xyz(xyzfile, prmtop)
 
     aimd_input = open(extdir + 'aimd.in', 'r')
-    for line in aimd_input:
-        if 'md_outputfreq' in line:
-            stepfreq = float(line.split()[-1])
-        if 'timestep' in line:
-            tstep = float(line.split()[-1])
-    tstep = stepfreq * tstep
+    tstep = 0.5 # fs
     tgrid = np.array([x*tstep for x in range(len(trajectory_ext))])
 
     return tgrid, trajectory_ext
