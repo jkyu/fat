@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 from matplotlib import rcParams
 
-def weighted_bin(grid, angles, weights, ninitcond=30):
+def weighted_bin(grid, angles, weights, ninitcond):
     '''
     Uses the change in population (diff_amp) along a trajectory
     to identify the torsional twists associated with population transfer.
@@ -43,43 +43,49 @@ def weighted_bin(grid, angles, weights, ninitcond=30):
 
     return weighted_amplitude
 
-data = pickle.load(open('./data/dihedrals-avgs.pickle', 'rb'))
-dihedral_names = data['dihedral_names']
-ex_keys = data['ex_keys']
+def isomerization_selectivity(dihedral_data):
+    dihedral_names = dihedral_data['dihedral_names']
+    dihedrals = dihedral_data['dihedrals_state_specific']
+    populations = dihedral_data['populations']
+    
+    # plot only S1 TBFs
+    tbf_keys = dihedral_data['tbf_keys']
+    ic_keys = [ x for x in tbf_keys if int(x.split('-')[1])==1 ]
+    tbf_keys = ic_keys
+    
+    grid = np.arange(0, 360, 10)
+    amps = {}
+    for dname in dihedral_names:
+        amp = np.zeros((len(grid)))
+        for key in tbf_keys:
+            pop = populations[key]
+            dihe = dihedrals[key][dname]
+            amp += weighted_bin(grid, dihe, pop, ninitcond=len(dihedral_data['ics']))
+        amps[dname] = amp
+    print(amps)
+    
+    xticks = np.arange(0, 9)*45
+    # yticks = np.arange(0, 5)*0.01
+    
+    rcParams.update({'figure.autolayout': True})
+    fig = plt.figure(figsize=(6,5))
+    labelsize = 16
+    ticksize = 14
+    plt.rc('xtick',labelsize=ticksize)
+    plt.rc('ytick',labelsize=ticksize)
+    
+    colors = ['orchid', 'firebrick', 'darkturquoise', 'orange', 'darkseagreen', 'olive']
+    for i, dname in enumerate(dihedral_names):
+        plt.plot(grid, amps[dname], label='%s' %(dname), color='orchid')
+    
+    plt.axis([0, 360, 0, 0.30])
+    plt.xlabel('Dihedral Angle', fontsize=labelsize)
+    plt.ylabel('Population Transferred (S$_1 \\rightarrow$ S$_0$)', fontsize=labelsize)
+    plt.legend(loc='best', frameon=False, fontsize=ticksize)
+    plt.tight_layout()
+    if not os.path.isdir('./figures/'):
+        os.mkdir('./figures/')
+    plt.savefig('./figures/isomerization-specificity.pdf', dpi=300)
 
-grid = np.arange(0, 360, 10)
-amps = {}
-for dname in dihedral_names:
-    amp = np.zeros((len(grid)))
-    for key in ex_keys:
-        pop = data['all_populations'][key]
-        dihe = data['all_dihedrals'][key][dname]
-        amp += weighted_bin(grid, dihe, pop, ninitcond=len(ex_keys))
-    amps[dname] = amp
-print(amps)
-
-xticks = np.arange(0, 9)*45
-# yticks = np.arange(0, 5)*0.01
-
-rcParams.update({'figure.autolayout': True})
-fig = plt.figure(figsize=(6,5))
-labelsize = 16
-ticksize = 14
-plt.rc('xtick',labelsize=ticksize)
-plt.rc('ytick',labelsize=ticksize)
-
-plt.plot(grid, amps[dihedral_names[0]], label='%s' %('$\\alpha$'), color='orchid')
-plt.plot(grid, amps[dihedral_names[1]], label='%s' %('$\\beta$' ), color='darkorange')
-plt.plot(grid, amps[dihedral_names[2]], label='%s' %('$\\gamma$'), color='slateblue')
-
-plt.xticks(xticks, fontsize=ticksize)
-# plt.yticks(yticks, fontsize=ticksize)
-plt.axis([0, 360, 0, 0.07])
-plt.xlabel('Dihedral Angle', fontsize=labelsize)
-plt.ylabel('Population Transferred', fontsize=labelsize)
-plt.legend(loc='best', frameon=False, fontsize=ticksize)
-plt.tight_layout()
-if not os.path.isdir('./figures/'):
-    os.mkdir('./figures/')
-plt.savefig('./figures/isomerization-specificity.pdf')
-plt.savefig('./figures/isomerization-specificity.png')
+dihedral_data = pickle.load(open('./data/dihedrals.pickle', 'rb'))
+isomerization_selectivity(dihedral_data)
