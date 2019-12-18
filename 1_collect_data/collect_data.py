@@ -152,6 +152,21 @@ def get_positions(xyzfile, prmtop):
     trajectory = md.load_xyz(xyzfile, prmtop)
     return trajectory
 
+def get_initstate(dirname):
+
+    initstate = None
+    fmsfile = dirname + 'FMS.out'
+    if os.path.isfile(fmsfile):
+        with open(fmsfile) as f:
+            for line in f:
+                if 'Electronic State:' in line:
+                    initstate = int(line.split()[-1]) - 1
+                    break
+    else:
+        raise Exception('Could not find InitState from %s.' %fmsfile)
+
+    return initstate
+
 def get_extension(extdir, prmtop):
     '''
     Read in coordinate information from AIMD extensions for ground state AIMS TBFs.
@@ -227,14 +242,13 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False):
 
     return tbf_data
 
-def collect_tbfs(initconds, dirlist, prmtop, initstate, write_fmsinfo=True, extensions=False):
+def collect_tbfs(initconds, dirlist, prmtop, write_fmsinfo=True, extensions=False):
     '''
     Gather TBFs in MDTraj and dump to disk to make subsequent analyses faster. 
     Summary of the argument types:
     initconds is a list
     dirlist is a dictionary
     prmtop is a string
-    initstate is an int or some number that can be cast as an int
     write_fmsinfo is a boolean
     extensions is a boolean
     '''
@@ -251,7 +265,7 @@ def collect_tbfs(initconds, dirlist, prmtop, initstate, write_fmsinfo=True, exte
 
         tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False)
         tbf_data['spawn_info'] =  None
-        tbf_data['state_id'] = int(initstate)
+        tbf_data['state_id'] = get_initstate(dirname)
 
         key = '%04d-%04d' %(ic, tbf_id)
         data[key] = tbf_data
@@ -300,8 +314,7 @@ dirlist = {}
 for ic in ics:
     dirlist['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
 topfile = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
-initstate = 1 # we start on S1 for this system. All of my stored data is 0-indexed starting from the ground state. 
-collect_tbfs(ics, dirlist, topfile, initstate, write_fmsinfo=True, extensions=True)
+collect_tbfs(ics, dirlist, topfile, write_fmsinfo=True, extensions=True)
 # set write_fmsinfo to False to avoid dumping out the fmsinfo file that contains
 # overall dynamics information, like IC labels, nstates, etc. Helpful if you
 # only want to process one simulation without clobbering a previous fmsinfo file.
