@@ -67,7 +67,8 @@ def plot(bla_data, figname='avg-bla', do_smoothing=False):
         os.mkdir('./figures')
     plt.savefig('./figures/%s.pdf' %figname, dpi=300)
 
-rcParams.update({'figure.autolayout': True})
-bla_data = pickle.load(open('./data/bla.pickle', 'rb'))
-figname = 'avg-bla'
-plot(bla_data, figname=figname)
+if __name__=='__main__':
+    rcParams.update({'figure.autolayout': True})
+    bla_data = pickle.load(open('./data/bla.pickle', 'rb'))
+    figname = 'avg_bla'
+    plot(bla_data, figname=figname)

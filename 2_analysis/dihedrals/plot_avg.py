@@ -62,5 +62,5 @@ def plot(dihedral_data, figname='avg-dihedrals'):
 
 rcParams.update({'figure.autolayout': True})
 dihedral_data = pickle.load(open('./data/dihedrals.pickle', 'rb'))
-figname = 'avg-dihedrals'
+figname = 'avg_dihedrals'
 plot(dihedral_data, figname=figname)

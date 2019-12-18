@@ -185,22 +185,23 @@ def process_trajectories(ics, tgrid, datadir, single_index, double_index):
 The following single and double bonds are enumerated and indexed according
 to the geometry file so that we can use mdtraj to compute the bond lengths.
 '''
-print('Indexing single and double bonds.')
-single_index = {}
-single_index['C8-C9']    = [3355, 3350]
-single_index['C10-C11']  = [3348, 3346]
-single_index['C12-C13']  = [3344, 3339]
-single_index['C14-C15']  = [3337, 3335]
-
-double_index = {}
-double_index['C9=C10']  = [3350, 3348]
-double_index['C11=C12'] = [3346, 3344]
-double_index['C13=C14'] = [3339, 3337]
-double_index['C15=NZ']  = [3335, 3333]
-
-tgrid = np.arange(0, 250, 5)
-datadir = '../../1-collect-data/data/'
-fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
-ics = fmsinfo['ics']
-nstates = fmsinfo['nstates']
-process_trajectories(ics, tgrid, datadir, single_index, double_index)
+if __name__=='__main__':
+    print('Indexing single and double bonds.')
+    single_index = {}
+    single_index['C8-C9']    = [3355, 3350]
+    single_index['C10-C11']  = [3348, 3346]
+    single_index['C12-C13']  = [3344, 3339]
+    single_index['C14-C15']  = [3337, 3335]
+    
+    double_index = {}
+    double_index['C9=C10']  = [3350, 3348]
+    double_index['C11=C12'] = [3346, 3344]
+    double_index['C13=C14'] = [3339, 3337]
+    double_index['C15=NZ']  = [3335, 3333]
+    
+    tgrid = np.arange(0, 250, 5)
+    datadir = '../../1_collect_data/data/'
+    fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
+    ics = fmsinfo['ics']
+    nstates = fmsinfo['nstates']
+    process_trajectories(ics, tgrid, datadir, single_index, double_index)

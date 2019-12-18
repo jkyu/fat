@@ -148,7 +148,7 @@ def integrate_fluorescence_time(fl, wgrid, tgrid):
 
     return fl_1D, egrid
 
-def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescence', compute_shift=False, steady_state_fl_file='./expt-data/steadystate.txt', expt_data_dir='./expt-data/', tshift=0):
+def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescence', compute_shift=False, steady_state_fl_file='./expt_data/steadystate.txt', expt_data_dir='./expt_data/', tshift=0):
 
     ''' The steady_state_fl_file argument points to reference experimental steady state fluorescence 
     data in txt format. The expt_data_dir argument points to a directory containing the experimental
@@ -252,7 +252,7 @@ fl_data = pickle.load(open('./data/fluorescence.pickle', 'rb'))
 wgrid = fl_data['wgrid']
 tgrid = fl_data['tgrid']
 fl    = fl_data['fluorescence']
-fl_error = pickle.load(open('./data/fl-error.pickle', 'rb'))
+fl_error = pickle.load(open('./data/fl_error.pickle', 'rb'))
 slice_wls = [650, 800]
-figname = 'time-resolved-fluorescence'
+figname = 'time_resolved_fluorescence'
 run(fl, fl_error, wgrid, tgrid, slice_wls, figname=figname)

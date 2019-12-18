@@ -165,7 +165,7 @@ def interpolate(grid, tsteps, data):
 
 if __name__=='__main__':
 
-    datadir = '../../1-collect-data/data/'
+    datadir = '../../1_collect_data/data/'
     fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
     ics = fmsinfo['ics']
     npoints = 201

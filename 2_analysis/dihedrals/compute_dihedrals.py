@@ -188,15 +188,16 @@ The following dihedral angles are enumerated and indexed according
 to the geometry file so that we can compute the dihedral angles.
 Pass this dictionary into compute_dihedrals()
 '''
-print('Indexing dihedral angles.')
-dihedral_index = {}
-dihedral_index['HCCH'] = [2, 5, 4, 0]
-
-tgrid = np.arange(0, 250, 5)
-datadir = '../../1-collect-data/data/'
-fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
-ics = fmsinfo['ics']
-nstates = fmsinfo['nstates']
-start_config = 'cis'
-outfile_name = 'dihedrals'
-process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_config, outfile_name=outfile_name)
+if __name__=='__main__':
+    print('Indexing dihedral angles.')
+    dihedral_index = {}
+    dihedral_index['HCCH'] = [2, 5, 4, 0]
+    
+    tgrid = np.arange(0, 250, 5)
+    datadir = '../../1_collect_data/data/'
+    fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
+    ics = fmsinfo['ics']
+    nstates = fmsinfo['nstates']
+    start_config = 'cis'
+    outfile_name = 'dihedrals'
+    process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_config, outfile_name=outfile_name)

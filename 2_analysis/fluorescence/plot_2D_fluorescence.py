@@ -82,5 +82,5 @@ fl_data = pickle.load(open('./data/fluorescence.pickle', 'rb'))
 wgrid = fl_data['wgrid']
 tgrid = fl_data['tgrid']
 fl    = fl_data['fluorescence']
-figname = '2D-fluorescence'
+figname = '2D_fluorescence'
 plot_fluorescence(fl, fl_shift, wgrid, tgrid, figname=figname)

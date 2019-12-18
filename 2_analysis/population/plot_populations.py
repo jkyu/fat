@@ -69,8 +69,9 @@ def plot_populations(pop_data, figname='population', do_fit=False, target_fit_st
         os.mkdir('./figures/')
     plt.savefig('./figures/%s.pdf' %figname, dpi=300)
 
-figname = 'population'
-do_fit = True
-target_fit_state = 1 # state to target for exponential fit
-pop_data = pickle.load(open('./data/populations.pickle', 'rb'))
-plot_populations(pop_data, figname)
+if __name__=='__main__':
+    figname = 'population'
+    do_fit = True
+    target_fit_state = 1 # state to target for exponential fit
+    pop_data = pickle.load(open('./data/populations.pickle', 'rb'))
+    plot_populations(pop_data, figname)

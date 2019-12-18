@@ -49,8 +49,9 @@ def sort_spawns(dihedral_data, dihe_key):
     print('Spawns < 200')
     cis_pop, trans_pop, error, cis_keys, trans_keys = compute_qy(dihedrals, populations, dihe_keys[0], class3_keys)
 
-dihedral_data = pickle.load(open('./data/dihedrals.pickle', 'rb'))
-dihe_keys = dihedral_data['dihedral_names']
-sort_spawns(dihedral_data, dihe_keys[0])
+if __name__=='__main__':
+    dihedral_data = pickle.load(open('./data/dihedrals.pickle', 'rb'))
+    dihe_keys = dihedral_data['dihedral_names']
+    sort_spawns(dihedral_data, dihe_keys[0])
     
 

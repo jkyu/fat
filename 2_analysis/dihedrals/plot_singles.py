@@ -59,10 +59,11 @@ def plot(ic, dihedral_data, nstates):
     plt.savefig('./figures/%04d.pdf' %ic, dpi=300)
     plt.close()
 
-rcParams.update({'figure.autolayout': True})
-dihedral_data = pickle.load(open('../dihedrals/data/dihedrals.pickle', 'rb'))
-nstates = dihedral_data['nstates']
-ics = dihedral_data['ics']
-
-for ic in ics:
-    plot(ic, dihedral_data, nstates)
+if __name__=='__main__':
+    rcParams.update({'figure.autolayout': True})
+    dihedral_data = pickle.load(open('../dihedrals/data/dihedrals.pickle', 'rb'))
+    nstates = dihedral_data['nstates']
+    ics = dihedral_data['ics']
+    
+    for ic in ics:
+        plot(ic, dihedral_data, nstates)

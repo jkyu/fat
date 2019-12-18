@@ -24,10 +24,12 @@ fig = plt.figure(figsize=(6,4.5))
 labelsize = 13
 ticksize = 11
 
+h2eV = 27.211386245
+
 tbf_energies = all_energies[tbf_key]
 for i, state_key in enumerate(tbf_energies.keys()):
     label = '%s energy' %state_key
-    plt.plot(tgrid, tbf_energies[state_key], linewidth=0.8, color=colors[i], label=label.title())
+    plt.plot(tgrid, tbf_energies[state_key]*h2eV, linewidth=0.8, color=colors[i], label=label.title())
 
 plt.xticks(fontsize=ticksize)
 plt.yticks(fontsize=ticksize)

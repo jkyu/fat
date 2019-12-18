@@ -44,6 +44,6 @@ grid_error = np.std(sampled_grids, axis=0)
 
 data2 = {}
 data2['fluorescence_error'] = grid_error
-print('Dumping the bootstrapping error for the fluorescence signal to ./data/fl-error.pickle.')
-with open('./data/fl-error.pickle', 'wb') as handle:
+print('Dumping the bootstrapping error for the fluorescence signal to ./data/fl_error.pickle.')
+with open('./data/fl_error.pickle', 'wb') as handle:
     pickle.dump(data2, handle, protocol=pickle.HIGHEST_PROTOCOL)

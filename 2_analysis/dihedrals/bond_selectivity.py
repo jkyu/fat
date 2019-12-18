@@ -87,5 +87,6 @@ def isomerization_selectivity(dihedral_data):
         os.mkdir('./figures/')
     plt.savefig('./figures/isomerization-specificity.pdf', dpi=300)
 
-dihedral_data = pickle.load(open('./data/dihedrals.pickle', 'rb'))
-isomerization_selectivity(dihedral_data)
+if __name__=='__main__':
+    dihedral_data = pickle.load(open('./data/dihedrals.pickle', 'rb'))
+    isomerization_selectivity(dihedral_data)
