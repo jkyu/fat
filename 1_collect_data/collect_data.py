@@ -155,15 +155,13 @@ def get_positions(xyzfile, prmtop):
 def get_initstate(dirname):
 
     initstate = None
-    fmsfile = dirname + 'FMS.out'
-    if os.path.isfile(fmsfile):
-        with open(fmsfile) as f:
-            for line in f:
-                if 'Electronic State:' in line:
-                    initstate = int(line.split()[-1]) - 1
-                    break
+    trajdump1 = dirname + 'TrajDump.1'
+    if os.path.isfile(trajdump1):
+        with open(trajdump1) as f:
+            lines = [x for x in f]
+            initstate = int(float(lines[-1].split()[-1])) - 1
     else:
-        raise Exception('Could not find InitState from %s.' %fmsfile)
+        raise Exception('Could not find the TBF state ID from %s.' %trajdump1)
 
     return initstate
 
