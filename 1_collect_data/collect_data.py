@@ -230,6 +230,13 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False):
 def collect_tbfs(initconds, dirlist, prmtop, initstate, write_fmsinfo=True, extensions=False):
     '''
     Gather TBFs in MDTraj and dump to disk to make subsequent analyses faster. 
+    Summary of the argument types:
+    initconds is a list
+    dirlist is a dictionary
+    prmtop is a string
+    initstate is an int or some number that can be cast as an int
+    write_fmsinfo is a boolean
+    extensions is a boolean
     '''
     for ic in initconds:
 
@@ -244,7 +251,7 @@ def collect_tbfs(initconds, dirlist, prmtop, initstate, write_fmsinfo=True, exte
 
         tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False)
         tbf_data['spawn_info'] =  None
-        tbf_data['state_id'] = initstate
+        tbf_data['state_id'] = int(initstate)
 
         key = '%04d-%04d' %(ic, tbf_id)
         data[key] = tbf_data
