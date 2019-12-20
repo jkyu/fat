@@ -41,7 +41,7 @@ def interpolate(grid, tsteps, data):
     
     return interp_data
 
-def get_populations(ics, tgrid, datadir, nstates):
+def get_populations(ics, datafiles, tgrid, nstates):
 
     print('Loading excited state trajectories and extracting population information.')
     interp_populations = {}
@@ -50,9 +50,9 @@ def get_populations(ics, tgrid, datadir, nstates):
         states['s%d' %i] = []
 
     ''' Grab population information out of all ICs and bin that onto a uniform time step time grid (passed in as tgrid) '''
-    for ic in ics:
+    for ic, datafile in zip(ics, datafiles):
         ic_tfinal = 0
-        data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
+        data = pickle.load(open(datafile, 'rb'))
         for tbf_key in data.keys():
 
             tbf = data[tbf_key]
@@ -86,7 +86,7 @@ def get_populations(ics, tgrid, datadir, nstates):
         for i, ic in enumerate(ics):
             ic_pop = np.zeros(len(tgrid))
             for tbf_key in states[state]:
-                # Group TBFs of from same state and same IC
+                # Group TBFs from same state and same IC
                 if ic == int(tbf_key.split('-')[0]):
                     ic_pop += interp_populations[tbf_key]
             state_pops[i,:] = ic_pop
@@ -127,9 +127,13 @@ Specify the time grid and ICs to use.
 Can use a coarser time grid than is used here and it shouldn't change the result.
 '''
 if __name__=='__main__':
-    datadir = '../../1_collect_data/data/'
+
+    datadir = '../../1_collect_data/'
     tgrid = np.arange(0, 250, 5) # edit the last number to change the grid spacing
-    fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
+    fmsinfo = pickle.load(open(datadir+'/data/fmsinfo.pickle', 'rb'))
+    picklefiles = fmsinfo['datafiles']
     ics = fmsinfo['ics']
+    labeled_ics = fmsinfo['labeled_ics']
+    datafiles = [ '%s%s' %(datadir, picklefiles[x]) for x in labeled_ics ] 
     nstates = fmsinfo['nstates']
-    get_populations(ics, tgrid, datadir, nstates)
+    get_populations(ics, datafiles, tgrid, nstates)

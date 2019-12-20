@@ -240,7 +240,7 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False):
 
     return tbf_data
 
-def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
+def collect_tbfs(initconds, dirlist, prmtop, extensions=False, label=None):
     '''
     Gather TBFs and dump to disk as pickle files to make subsequent analyses faster. 
     Returns the number of states involved in the FMS simulations in order to facilitate the
@@ -261,7 +261,7 @@ def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
         Parent TBF
         '''
         tbf_id = 1
-        print('%04d-%04d' %(ic, tbf_id))
+        print('%s: %04d-%04d' %(label, ic, tbf_id))
 
         tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False)
         tbf_data['spawn_info'] =  None
@@ -281,7 +281,7 @@ def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
                 if len(spawn) > 0:
 
                     tbf_id = spawn['spawn_id']
-                    print('%04d-%04d' %(ic, tbf_id))
+                    print('%s: %04d-%04d' %(label, ic, tbf_id))
 
                     tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop, extensions)
                     if not tbf_data==None:
@@ -294,8 +294,12 @@ def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
         if not os.path.isdir('./data/'):
             os.mkdir('./data/')
 
-        with open('./data/%04d.pickle' %(ic), 'wb') as handle:
-            pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        if label==None: 
+            with open('./data/%04d.pickle' %(ic), 'wb') as handle:
+                pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        else:
+            with open('./data/%s_%04d.pickle' %(label, ic), 'wb') as handle:
+                pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         nstates = tbf_data['nstates']
 
@@ -312,13 +316,18 @@ def write_fmsinfo(nstates=None, ics=None):
     contains the full list of ics processed. 
     '''
     simulation_data = {}
+
     if ics==None:
-        ic_list = glob.glob('./data/0*.pickle')
-        ic_list = [int(os.path.basename(x).split('.')[0]) for x in ics]
+        sim_list = glob.glob('./data/*.pickle')
+        sim_list = [x for x in sim_list if 'fmsinfo' not in x]
+        sim_list.sort()
+        ic_list = [int(os.path.basename(x).split('.')[0]) for x in sim_list]
         ic_list.sort()
         ics = { 'ics' : ic_list }
     else:
-        ic_list = [ics[key] for key in ics.keys()]
+        ic_list = []
+        for key in ics.keys():
+            ic_list = ic_list + ics[key]
         ic_list.sort()
 
     if nstates==None:
@@ -326,9 +335,18 @@ def write_fmsinfo(nstates=None, ics=None):
         tbf_data = ic_data[ic_data.keys()[0]]
         nstates = tbf_data['nstates']
 
+    sim_dict = {}
+    for key in ics.keys():
+        sim_keys = [ '%s_%04d' %(key, ic) for ic in ics[key] ]
+        for sim_key in sim_keys:
+            sim_dict[sim_key] = '/data/%s.pickle' %sim_key
+    sim_keys = [ x for x in sim_dict.keys() ]
+    sim_keys.sort()
+
     simulation_data['ics'] = ic_list
-    simulation_data['labeled_ics'] = ics
+    simulation_data['labeled_ics'] = sim_keys
     simulation_data['nstates'] = nstates
+    simulation_data['datafiles'] = sim_dict
     with open('./data/fmsinfo.pickle', 'wb') as handle:
         pickle.dump(simulation_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -336,26 +354,29 @@ if __name__=='__main__':
 
     fmsdir = '../../' # Main directory containing all FMS simulations
     topfile = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
+    ic_dict = {}
 
     ''' collect_tbfs processes the individual FMS simulations and dumps all of the data to disk.
     Collect the FMS data first and then write the fmsinfo file. Can collect the FMS data
     for different sets of FMS simulations. Example with two simulation sets below. '''
+    label1 = 'set1'
     ics1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 27, 35, 44, 55, 64, 68, 76, 81]
     dirlist1 = {}
     for ic in ics1:
         dirlist1['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
-    nstates1 = collect_tbfs(ics1, dirlist1, topfile, extensions=True)
+    nstates1 = collect_tbfs(ics1, dirlist1, topfile, label=label1, extensions=True)
 
+    label2 = 'set2'
     ics2 = [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
     dirlist2 = {}
     for ic in ics2:
         dirlist2['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
-    nstates2 = collect_tbfs(ics2, dirlist2, topfile, extensions=True)
+    nstates2 = collect_tbfs(ics2, dirlist2, topfile, label=label2, extensions=True)
     
     ''' write_fmsinfo writes out a file that contains information that helps manage all of the FMS simulations. 
     Leave ics argument blank if you don't care about distinguishing between FMS sets. '''
+    ic_dict = {label1 : ics1, label2 : ics2}
     if nstates1==nstates2:
-        ics = { 'ic_set1' : ics1, 'ic_set2' : ics2}
-        write_fmsinfo(nstates1, ics)
+        write_fmsinfo(nstates1, ic_dict)
     else:
         raise Exception('nstate values are not consistent. Not all FMS simulations involve the same level of electronic structure.')

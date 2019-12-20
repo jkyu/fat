@@ -15,7 +15,6 @@ to file as ./data/populations.pickle
 Read the time grid and the population information to plot them. '''
 def plot_populations(pop_data, figname='population', do_fit=False, target_fit_state=1):
 
-    ics = pop_data['ics']
     tgrid = pop_data['tgrid']
     populations = pop_data['populations']
     errors = pop_data['errors']
