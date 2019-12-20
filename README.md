@@ -12,7 +12,8 @@ Required python packages:
 - MatPlotLib
 
 TODO:
-- In analysis scripts, take full paths to the FMS pickle files instead of taking the data directory as an argument. This will allow processing data in different directories and will be more flexible. 
+- In analysis scripts, take full paths to the FMS pickle files instead of taking the data directory as an argument. A list of the full paths should be given instead of just one string (datadir). Right now, the full paths to the data are put together as part of the main functions of the analysis scripts. Want more flexibility than this. 
+- Weigh the traces of spawned TBFs by population as line width. 
 - Remove the requirement of a topology file (read: write my own xyz parser). 
 - Convert this into a python package instead of a set of scripts with separate main functions that require input. 
 - Example with ethylene.
