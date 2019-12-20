@@ -240,15 +240,17 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False):
 
     return tbf_data
 
-def collect_tbfs(initconds, dirlist, prmtop, write_fmsinfo=True, extensions=False):
+def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
     '''
-    Gather TBFs in MDTraj and dump to disk to make subsequent analyses faster. 
-    Summary of the argument types:
-    initconds is a list
-    dirlist is a dictionary
-    prmtop is a string
-    write_fmsinfo is a boolean
-    extensions is a boolean
+    Gather TBFs and dump to disk as pickle files to make subsequent analyses faster. 
+    Returns the number of states involved in the FMS simulations in order to facilitate the
+    writing of the fmsinfo output later (not required). 
+    Goes through all initial conditions given as a list of integer and processes the TBFs in
+    a dict of FMS simulation directories (dirlist) corresponding to the integer associated with the
+    initial condition. 
+    Takes prmtop as a topology file to help with parsing coordinates in MDTraj.
+    Has a boolean option extensions for turning on/off the option to process AIMD extensions of 
+    ground state TBFs.
     '''
     for ic in initconds:
 
@@ -295,24 +297,65 @@ def collect_tbfs(initconds, dirlist, prmtop, write_fmsinfo=True, extensions=Fals
         with open('./data/%04d.pickle' %(ic), 'wb') as handle:
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    simulation_data = {}
-    ics = glob.glob('./data/0*.pickle')
-    ics = [int(os.path.basename(x).split('.')[0]) for x in ics]
-    ics.sort()
-    simulation_data['ics'] = ics
-    simulation_data['nstates'] = tbf_data['nstates']
-    if write_fmsinfo:
-        with open('./data/fmsinfo.pickle', 'wb') as handle:
-            pickle.dump(simulation_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        nstates = tbf_data['nstates']
 
-ics = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 27, 35, 44, 55, 64, 68, 76, 81]
-ics = ics + [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
-fmsdir = '../../' # Main directory containing all FMS simulations
-dirlist = {}
-for ic in ics:
-    dirlist['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
-topfile = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
-collect_tbfs(ics, dirlist, topfile, write_fmsinfo=True, extensions=True)
-# set write_fmsinfo to False to avoid dumping out the fmsinfo file that contains
-# overall dynamics information, like IC labels, nstates, etc. Helpful if you
-# only want to process one simulation without clobbering a previous fmsinfo file.
+    return nstates
+
+def write_fmsinfo(nstates=None, ics=None):
+    ''' 
+    fmsinfo.pickle will contain a list of ICs and the number of states involved in electronic structure. 
+    The 'ics' key will return the list of ICs as integers.
+    The 'labeled_ics' key gives a dictionary that has the initial conditions classified according
+    to user specification. 
+    If you want to use all of the initial conditions for FMS simulations processed,
+    just leave the ics argument blank. In this case, the 'labeled_ics' dict just
+    contains the full list of ics processed. 
+    '''
+    simulation_data = {}
+    if ics==None:
+        ic_list = glob.glob('./data/0*.pickle')
+        ic_list = [int(os.path.basename(x).split('.')[0]) for x in ics]
+        ic_list.sort()
+        ics = { 'ics' : ic_list }
+    else:
+        ic_list = [ics[key] for key in ics.keys()]
+        ic_list.sort()
+
+    if nstates==None:
+        ic_data = pickle.load(open(datadir+('/%04d.pickle' %ics[0]), 'rb'))
+        tbf_data = ic_data[ic_data.keys()[0]]
+        nstates = tbf_data['nstates']
+
+    simulation_data['ics'] = ic_list
+    simulation_data['labeled_ics'] = ics
+    simulation_data['nstates'] = nstates
+    with open('./data/fmsinfo.pickle', 'wb') as handle:
+        pickle.dump(simulation_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+if __name__=='__main__':
+
+    fmsdir = '../../' # Main directory containing all FMS simulations
+    topfile = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
+
+    ''' collect_tbfs processes the individual FMS simulations and dumps all of the data to disk.
+    Collect the FMS data first and then write the fmsinfo file. Can collect the FMS data
+    for different sets of FMS simulations. Example with two simulation sets below. '''
+    ics1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 27, 35, 44, 55, 64, 68, 76, 81]
+    dirlist1 = {}
+    for ic in ics1:
+        dirlist1['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
+    nstates1 = collect_tbfs(ics1, dirlist1, topfile, extensions=True)
+
+    ics2 = [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
+    dirlist2 = {}
+    for ic in ics2:
+        dirlist2['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
+    nstates2 = collect_tbfs(ics2, dirlist2, topfile, extensions=True)
+    
+    ''' write_fmsinfo writes out a file that contains information that helps manage all of the FMS simulations. 
+    Leave ics argument blank if you don't care about distinguishing between FMS sets. '''
+    if nstates1==nstates2:
+        ics = { 'ic_set1' : ics1, 'ic_set2' : ics2}
+        write_fmsinfo(nstates1, ics)
+    else:
+        raise Exception('nstate values are not consistent. Not all FMS simulations involve the same level of electronic structure.')
