@@ -12,12 +12,7 @@ Required python packages:
 - MatPlotLib
 
 TODO:
-- Toy examples for how this thing works. 
-- Some descriptions of the main data structures I'm using here. How to access the pickled data in general.
+- In analysis scripts, take full paths to the FMS pickle files instead of taking the data directory as an argument. This will allow processing data in different directories and will be more flexible. 
 - Remove the requirement of a topology file (read: write my own xyz parser). 
-- Update all scripts to handle arbitrary electronic states. 
-    - Population scripts done.
-    - Interpolation for energies now works. 
-    - Bond length and dihedral angle tracking work now. [Dec 2, 2019]
-    - 2D Fluorescence works for arbitrary number of states. Plotting steady-state and time-resolved single-wavelength fluorescence signals now works, but is not very general due to how much user input is involved. For now, use the 1D processing/plotting code as examples instead of black box scripts. [Dec 3, 2019]
 - Convert this into a python package instead of a set of scripts with separate main functions that require input. 
+- Example with ethylene.
