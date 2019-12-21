@@ -56,7 +56,10 @@ def sort_spawns(angle_data, angle_key, dihedral_data, dihe_key, qy_data):
     plt.axis([95, 165, 175, 285])
     plt.xlabel('%s Angle' %angle_key, fontsize=labelsize)
     plt.ylabel('%s Dihedral Angle' %dihe_key, fontsize=labelsize)
-    plt.savefig('./figures/bubble.pdf', dpi=300)
+
+    if not os.path.isdir('./figures'):
+        os.mkdir('./figures')
+    plt.savefig('./figures/spawn_scatter.pdf', dpi=300)
 
 if __name__=='__main__':
     angle_data = pickle.load(open('../angles/data/angles.pickle', 'rb'))
