@@ -65,7 +65,7 @@ def compute_dihedral(frame, dihe_inds):
 
     return dihedral_angle
 
-def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_config='cis', outfile_name='dihedrals'):
+def process_trajectories(ics, datafiles, tgrid, nstates, dihedral_index, start_config='cis', outfile_name='dihedrals'):
     '''
     Load the fat data file and collect the spawn information.
     Gather the value of the dihedral angles from the trajectories.
@@ -83,8 +83,9 @@ def process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_con
     state_ids = {}
 
     ''' Compute the dihedral angles. The data dictionary is indexed as IC -> TBF Key -> Dihedral Name -> Frame Number '''
-    for ic in ics:
-        data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
+    for ic, datafile in zip(ics, datafiles):
+        data = pickle.load(open(datafile, 'rb'))
+        print('Computing dihedral angles for simulation %s' %datafile)
         for tbf_key in data.keys():
 
             tbf = data[tbf_key]
@@ -194,10 +195,12 @@ if __name__=='__main__':
     dihedral_index['HCCH'] = [2, 5, 4, 0]
     
     tgrid = np.arange(0, 250, 5)
-    datadir = '../../1_collect_data/data/'
-    fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
+    datadir = '../../1_collect_data/'
+    fmsinfo = pickle.load(open(datadir+'/data/fmsinfo.pickle', 'rb'))
+    picklefiles = fmsinfo['datafiles']
+    datafiles = [ datadir+x for x in picklefiles ] 
     ics = fmsinfo['ics']
     nstates = fmsinfo['nstates']
     start_config = 'cis'
     outfile_name = 'dihedrals'
-    process_trajectories(ics, tgrid, datadir, nstates, dihedral_index, start_config, outfile_name=outfile_name)
+    process_trajectories(ics, datafiles, tgrid, nstates, dihedral_index, start_config, outfile_name=outfile_name)

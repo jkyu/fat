@@ -58,7 +58,7 @@ def compute_angle(frame, angle_inds):
 
     return angle
 
-def process_trajectories(ics, tgrid, datadir, nstates, angle_index, outfile_name='angles'):
+def process_trajectories(ics, datafiles, tgrid, nstates, angle_index, outfile_name='angles'):
     '''
     Load the fat data file and collect the spawn information.
     Gather the value of the angles from the trajectories.
@@ -76,8 +76,8 @@ def process_trajectories(ics, tgrid, datadir, nstates, angle_index, outfile_name
     state_ids = {}
 
     ''' Compute the angles. The data dictionary is indexed as IC -> TBF Key -> Angle Name -> Frame Number '''
-    for ic in ics:
-        data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
+    for datafile in datafiles:
+        data = pickle.load(open(datafile, 'rb'))
         for tbf_key in data.keys():
 
             tbf = data[tbf_key]
@@ -183,13 +183,14 @@ Pass this dictionary into compute_angles()
 '''
 print('Indexing angles.')
 angle_index = {}
-angle_index['CNN'] = [13, 12, 11]
-angle_index['NNC'] = [12, 11, 0]
+angle_index['test'] = [3, 0, 1]
 
 tgrid = np.arange(0, 750, 5)
-datadir = '../../1-collect-data/data/'
-fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
+datadir = '../../1_collect_data/'
+fmsinfo = pickle.load(open(datadir+'/data/fmsinfo.pickle', 'rb'))
+picklefiles = fmsinfo['datafiles']
+datafiles = [ datadir+x for x in picklefiles ] 
 ics = fmsinfo['ics']
 nstates = fmsinfo['nstates']
 outfile_name = 'angles'
-process_trajectories(ics, tgrid, datadir, nstates, angle_index, outfile_name=outfile_name)
+process_trajectories(ics, datafiles, tgrid, nstates, angle_index, outfile_name=outfile_name)

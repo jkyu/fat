@@ -52,7 +52,7 @@ def compute_intensity(en_gap, populations, transition_dipoles):
 
 ## Functions that actually do stuff and get called by main
 
-def compute_fluorescence(initconds, tgrid, wgrid, datadir, ex_state=1, outfile_name='fluorescence'):
+def compute_fluorescence(initconds, datafiles, tgrid, wgrid, ex_state=1, outfile_name='fluorescence'):
 
     npoints = len(tgrid)
     interp_grid = tgrid - tgrid[0] # zeros the grid for interpolation
@@ -63,9 +63,9 @@ def compute_fluorescence(initconds, tgrid, wgrid, datadir, ex_state=1, outfile_n
     tbf_data = {}
 
     print('Loading all trajectories and collecting data for TBFs on excited state S%d' %ex_state) 
-    for ic in initconds:
-        print('Computing S%d fluorescence signal from FMS simulation %d' %(ex_state, ic))
-        data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
+    for datafile in datafiles:
+        print('Computing S%d fluorescence signal from FMS simulation in %s' %(ex_state, datafile))
+        data = pickle.load(open(datafile, 'rb'))
         for tbf_key in data.keys():
             
             tbf = data[tbf_key]
@@ -165,12 +165,14 @@ def interpolate(grid, tsteps, data):
 
 if __name__=='__main__':
 
-    datadir = '../../1_collect_data/data/'
-    fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
+    datadir = '../../1_collect_data/'
+    fmsinfo = pickle.load(open(datadir+'/data/fmsinfo.pickle', 'rb'))
     ics = fmsinfo['ics']
+    picklefiles = fmsinfo['datafiles']
+    datafiles = [ datadir+x for x in picklefiles ] 
     npoints = 201
     tgrid  = np.linspace(-90., 260., npoints)
     wgrid = np.linspace(100, 1140, npoints)
     ex_state = 1 # S1-S0 fluorescence. ex_state is 0 indexed, so S1 is ex_state=1
     outfile_name = 'fluorescence' # name of the pickle file saved to the data directory
-    compute_fluorescence(ics, tgrid, wgrid, datadir, ex_state=ex_state, outfile_name=outfile_name)
+    compute_fluorescence(ics, datafiles, tgrid, wgrid, ex_state=ex_state, outfile_name=outfile_name)

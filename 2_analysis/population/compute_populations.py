@@ -68,7 +68,7 @@ def get_populations(ics, datafiles, tgrid, nstates):
 
             interp_pop = interpolate(tgrid, time_steps, populations)
             interp_populations['%s' %tbf_key] = interp_pop
-        print('IC %04d final time step: %f' %(ic, ic_tfinal))
+        print('IC %04d final time step: %f. From file %s.' %(ic, ic_tfinal, datafile))
 
     print('Total number of TBFs:')
     print('  Number of ICs: ', len(ics))
@@ -132,8 +132,7 @@ if __name__=='__main__':
     tgrid = np.arange(0, 250, 5) # edit the last number to change the grid spacing
     fmsinfo = pickle.load(open(datadir+'/data/fmsinfo.pickle', 'rb'))
     picklefiles = fmsinfo['datafiles']
+    datafiles = [ datadir+x for x in picklefiles ] 
     ics = fmsinfo['ics']
-    labeled_ics = fmsinfo['labeled_ics']
-    datafiles = [ '%s%s' %(datadir, picklefiles[x]) for x in labeled_ics ] 
     nstates = fmsinfo['nstates']
     get_populations(ics, datafiles, tgrid, nstates)

@@ -32,7 +32,7 @@ def interpolate(grid, tsteps, data):
 
     return interp_data
 
-def get_energy(ics, tgrid, datadir, nstates):
+def get_energy(ics, datafiles, tgrid, nstates):
     '''
     Examine the energies for S0 and S1 over time for the TBFs. 
     Load the fat data file and collect the spawn information.
@@ -47,8 +47,8 @@ def get_energy(ics, tgrid, datadir, nstates):
         states['s%d' %i] = []
 
     ''' Grab energy information out of all ICs and bin them onto a uniform time script. '''
-    for ic in ics:
-        data = pickle.load(open(datadir+('/%04d.pickle' %ic), 'rb'))
+    for datafile in datafiles:
+        data = pickle.load(open(datafile, 'rb'))
         for tbf_key in data.keys():
 
             tbf = data[tbf_key]
@@ -82,9 +82,11 @@ def get_energy(ics, tgrid, datadir, nstates):
 Specify the time grid and ICs to use. 
 Can use a coarser time grid than is used here and it shouldn't change the result.
 '''
-datadir = '../../1_collect_data/data/'
 tgrid = np.arange(0, 250, 5) # edit the last number to change the grid spacing
-fmsinfo = pickle.load(open(datadir+'/fmsinfo.pickle', 'rb'))
+datadir = '../../1_collect_data/'
+fmsinfo = pickle.load(open(datadir+'/data/fmsinfo.pickle', 'rb'))
+picklefiles = fmsinfo['datafiles']
+datafiles = [ datadir+x for x in picklefiles ] 
 ics = fmsinfo['ics']
 nstates = fmsinfo['nstates']
-get_energy(ics, tgrid, datadir, nstates)
+get_energy(ics, datafiles, tgrid, nstates)
