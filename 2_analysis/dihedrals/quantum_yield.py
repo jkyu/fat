@@ -1,3 +1,4 @@
+import os
 import sys
 import numpy as np
 import pickle
@@ -8,7 +9,7 @@ It computes the quantum yield for cis and trans photoproducts.
 This is independent of whether you start from cis or trans. That is
 dealt with in the compute_dihedrals script. '''
 
-def compute_qy(dihedrals, populations, dihe_key, tbf_keys):
+def compute_qy(dihedrals, populations, dihe_key, tbf_keys, special_cases=[], save_qy=False):
 
     ''' Compute isomerization quantum yield error by bootstrapping '''
     resampled_qy = []
@@ -21,7 +22,9 @@ def compute_qy(dihedrals, populations, dihe_key, tbf_keys):
         trans_keys = []
         cis_keys = []
         for key in resampled_keys:
-            if dihedrals[key][dihe_key][-1] > 270:
+            if key in special_cases:
+                cis_keys.append(key)
+            elif dihedrals[key][dihe_key][-1] > 270:
                 cis_keys.append(key)
             else:
                 trans_keys.append(key)
@@ -43,7 +46,9 @@ def compute_qy(dihedrals, populations, dihe_key, tbf_keys):
     trans_keys = []
     cis_keys = []
     for key in tbf_keys:
-        if dihedrals[key][dihe_key][-1] > 270:
+        if key in special_cases:
+            cis_keys.append(key)
+        elif dihedrals[key][dihe_key][-1] > 270:
             cis_keys.append(key)
         else:
             trans_keys.append(key)
@@ -67,19 +72,29 @@ def compute_qy(dihedrals, populations, dihe_key, tbf_keys):
     to the ground state, so this is slightly different from dividing by the total population of all of the
     initial conditions. But most simulations should have >98% of the population on the ground state anyway. '''
     total_pop = trans_pop + cis_pop
-    qy_cis = cis_pop / total_pop
-    qy_trans = trans_pop / total_pop
+    cis_qy = cis_pop / total_pop
+    trans_qy = trans_pop / total_pop
 
     print('Total Population: %0.4f' %total_pop)
     print('Cis Photoproduct Population: %0.4f' %cis_pop)
     print('Trans Photoproduct Population: %0.4f' %trans_pop)
     print()
 
-    print('Cis QY: %0.4f +/- %0.4f' %(qy_cis, error))
-    print('Trans QY: %0.4f +/- %0.4f' %(qy_trans, error))
+    print('Cis QY: %0.4f +/- %0.4f' %(cis_qy, error))
+    print('Trans QY: %0.4f +/- %0.4f' %(trans_qy, error))
     print()
 
-    return cis_pop, trans_pop, error
+    data = {'cis_keys' : cis_keys, 'trans_keys' :trans_keys,
+            'cis_pop' : cis_pop, 'trans_pop': trans_pop, 
+            'cis_qy' : cis_qy, 'trans_qy' : trans_qy, 'error' : error}
+    if save_qy:
+        if not os.path.isdir('./data/'):
+            os.mkdir('./data/')
+        with open('./data/%s.pickle' %('qy'), 'wb') as handle:
+            pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+    return cis_pop, trans_pop, error, cis_keys, trans_keys
 
 if __name__=='__main__':
     dihedral_data = pickle.load(open('./data/dihedrals.pickle', 'rb'))
@@ -90,4 +105,4 @@ if __name__=='__main__':
     state_ids = dihedral_data['state_ids']
     tbf_keys = dihedral_data['tbf_keys']
     gs_keys = [ x for x in tbf_keys if state_ids[x]==0 ]
-    compute_qy(dihedrals, populations, dihe_keys[0], gs_keys)
+    compute_qy(dihedrals, populations, dihe_keys[0], gs_keys, save_qy=True)
