@@ -15,7 +15,7 @@ This uses a fluorescence shift that should be computed in the
 output of plot-time-resolved.py and saved to ./data/fl_shift.txt
 '''
 
-def plot_fluorescence(fl_data, fl_shift, wgrid, tgrid, figname='2D-fluorescence', lineout=False):
+def plot_fluorescence(fl_data, fl_shift, wgrid, tgrid, figname='2D-fluorescence', lineout=False, lineout_wls=None):
     '''
     Here, we think about time as x and energy as y. It turns out that in
     the fluorescence 2D array, each row corresponds to a specific time 
@@ -57,11 +57,9 @@ def plot_fluorescence(fl_data, fl_shift, wgrid, tgrid, figname='2D-fluorescence'
     # Plot line outs -- if you don't have single wavelength signal to highlight,
     # you can comment this block out
     if lineout:
-        wl650 = np.argmin(np.abs(egrid - (1240./650. + fl_shift)))
-        wl800 = np.argmin(np.abs(egrid - (1240./800. + fl_shift)))
-        print(wgrid[wl650], wgrid[wl800])
-        plt.plot(np.arange(ngrid), [wl650]*len(tgrid), linewidth=2.0, linestyle='-', color='silver')
-        plt.plot(np.arange(ngrid), [wl800]*len(tgrid), linewidth=2.0, linestyle='-', color='silver')
+        for wl in lineout_wls:
+            lineout_wl = np.argmin(np.abs(egrid - (1240./wl + fl_shift)))
+            plt.plot(np.arange(ngrid), [lineout_wls]*len(tgrid), linewidth=2.0, linestyle='-', color='silver')
 
     plt.xticks(xticks, xlabels, fontsize=ticksize)
     plt.yticks(yticks, ylabels, fontsize=ticksize)
@@ -82,5 +80,6 @@ fl_data = pickle.load(open('./data/fluorescence.pickle', 'rb'))
 wgrid = fl_data['wgrid']
 tgrid = fl_data['tgrid']
 fl    = fl_data['fluorescence']
+lineout_wls = [650, 850]
 figname = '2D_fluorescence'
-plot_fluorescence(fl, fl_shift, wgrid, tgrid, figname=figname)
+plot_fluorescence(fl, fl_shift, wgrid, tgrid, figname=figname, lineout=True, lineout_wls=lineout_wls)
