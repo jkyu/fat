@@ -301,7 +301,7 @@ def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
 
     return nstates
 
-def write_fmsinfo(nstates=None, labeled_ics=None):
+def write_fmsinfo(fmsdir, dirlist, nstates=None, labeled_ics=None):
     ''' 
     fmsinfo.pickle will contain a list of ICs and the number of states involved in electronic structure. 
     The 'ics' key will return the list of ICs as integers.
@@ -344,6 +344,9 @@ def write_fmsinfo(nstates=None, labeled_ics=None):
     simulation_data['labeled_ics'] = labeled_ics
     simulation_data['nstates'] = nstates
     simulation_data['datafiles'] = sim_list
+    simulation_data['fmsdir'] = fmsdir
+    simulation_data['dirlist'] = dirlist
+    print('Saving fmsinfo.pickle')
     with open('./data/fmsinfo.pickle', 'wb') as handle:
         pickle.dump(simulation_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -374,7 +377,7 @@ if __name__=='__main__':
     # Leave ics argument blank if you don't care about distinguishing between FMS sets. '''
     # ic_dict = {label1 : ics1, label2 : ics2}
     # if nstates1==nstates2:
-    #     write_fmsinfo(nstates1, ic_dict)
+    #     write_fmsinfo(fmsdir, nstates1, ic_dict)
     # else:
     #     raise Exception('nstate values are not consistent. Not all FMS simulations involve the same level of electronic structure.')
 
@@ -383,5 +386,5 @@ if __name__=='__main__':
     for ic in ics:
         dirlist['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
     collect_tbfs(ics, dirlist, topfile, extensions=False)
-    write_fmsinfo()
+    write_fmsinfo(fmsdir, dirlist)
 
