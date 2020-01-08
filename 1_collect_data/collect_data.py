@@ -327,7 +327,7 @@ def write_fmsinfo(nstates=None, ics=None):
         ic_list.sort()
 
     if nstates==None:
-        ic_data = pickle.load(open(datadir+('/%04d.pickle' %ics[0]), 'rb'))
+        ic_data = pickle.load(open('./data/%04d.pickle' %ics[0], 'rb'))
         tbf_data = ic_data[ic_data.keys()[0]]
         nstates = tbf_data['nstates']
 
@@ -348,8 +348,8 @@ def write_fmsinfo(nstates=None, ics=None):
 
 if __name__=='__main__':
 
-    fmsdir = '../../' # Main directory containing all FMS simulations
-    topfile = '../../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
+    fmsdir = '../eth_data/' # Main directory containing all FMS simulations
+    topfile = '../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
     ic_dict = {}
 
     ''' collect_tbfs processes the individual FMS simulations and dumps all of the data to disk.
