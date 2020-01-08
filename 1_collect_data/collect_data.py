@@ -301,7 +301,7 @@ def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
 
     return nstates
 
-def write_fmsinfo(nstates=None, ics=None):
+def write_fmsinfo(nstates=None, labeled_ics=None):
     ''' 
     fmsinfo.pickle will contain a list of ICs and the number of states involved in electronic structure. 
     The 'ics' key will return the list of ICs as integers.
@@ -316,10 +316,10 @@ def write_fmsinfo(nstates=None, ics=None):
     sim_list = [x for x in sim_list if 'fmsinfo' not in x]
     sim_list.sort()
 
-    if ics==None:
+    if labeled_ics==None:
         ic_list = [int(os.path.basename(x).split('.')[0]) for x in sim_list]
         ic_list.sort()
-        ics = { 'ics' : ic_list }
+        labeled_ics = { 'ics' : ic_list }
     else:
         ic_list = []
         for key in ics.keys():
@@ -327,8 +327,9 @@ def write_fmsinfo(nstates=None, ics=None):
         ic_list.sort()
 
     if nstates==None:
-        ic_data = pickle.load(open('./data/%04d.pickle' %ics[0], 'rb'))
-        tbf_data = ic_data[ic_data.keys()[0]]
+        ic_data = pickle.load(open('./data/%04d.pickle' %ic_list[0], 'rb'))
+        key = [x for x in ic_data.keys()][0]
+        tbf_data = ic_data[key]
         nstates = tbf_data['nstates']
 
     # sim_dict = {}
@@ -340,7 +341,7 @@ def write_fmsinfo(nstates=None, ics=None):
     # sim_keys.sort()
 
     simulation_data['ics'] = ic_list
-    simulation_data['labeled_ics'] = ics
+    simulation_data['labeled_ics'] = labeled_ics
     simulation_data['nstates'] = nstates
     simulation_data['datafiles'] = sim_list
     with open('./data/fmsinfo.pickle', 'wb') as handle:
@@ -355,24 +356,32 @@ if __name__=='__main__':
     ''' collect_tbfs processes the individual FMS simulations and dumps all of the data to disk.
     Collect the FMS data first and then write the fmsinfo file. Can collect the FMS data
     for different sets of FMS simulations. Example with two simulation sets below. '''
-    label1 = 'set1'
-    ics1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 27, 35, 44, 55, 64, 68, 76, 81]
-    dirlist1 = {}
-    for ic in ics1:
-        dirlist1['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
-    nstates1 = collect_tbfs(ics1, dirlist1, topfile, extensions=True)
+    # label1 = 'set1'
+    # ics1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 27, 35, 44, 55, 64, 68, 76, 81]
+    # dirlist1 = {}
+    # for ic in ics1:
+    #     dirlist1['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
+    # nstates1 = collect_tbfs(ics1, dirlist1, topfile, extensions=True)
 
-    label2 = 'set2'
-    ics2 = [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
-    dirlist2 = {}
-    for ic in ics2:
-        dirlist2['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
-    nstates2 = collect_tbfs(ics2, dirlist2, topfile, extensions=True)
-    
-    ''' write_fmsinfo writes out a file that contains information that helps manage all of the FMS simulations. 
-    Leave ics argument blank if you don't care about distinguishing between FMS sets. '''
-    ic_dict = {label1 : ics1, label2 : ics2}
-    if nstates1==nstates2:
-        write_fmsinfo(nstates1, ic_dict)
-    else:
-        raise Exception('nstate values are not consistent. Not all FMS simulations involve the same level of electronic structure.')
+    # label2 = 'set2'
+    # ics2 = [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
+    # dirlist2 = {}
+    # for ic in ics2:
+    #     dirlist2['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
+    # nstates2 = collect_tbfs(ics2, dirlist2, topfile, extensions=True)
+    # 
+    # ''' write_fmsinfo writes out a file that contains information that helps manage all of the FMS simulations. 
+    # Leave ics argument blank if you don't care about distinguishing between FMS sets. '''
+    # ic_dict = {label1 : ics1, label2 : ics2}
+    # if nstates1==nstates2:
+    #     write_fmsinfo(nstates1, ic_dict)
+    # else:
+    #     raise Exception('nstate values are not consistent. Not all FMS simulations involve the same level of electronic structure.')
+
+    ics = [x for x in range(0,10)]
+    dirlist = {}
+    for ic in ics:
+        dirlist['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
+    collect_tbfs(ics, dirlist, topfile, extensions=False)
+    write_fmsinfo()
+
