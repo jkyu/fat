@@ -95,13 +95,13 @@ def get_transition_dipoles(tdipfile, nstates):
         _ = f.readline() # header line to get rid of
         # header = f.readline() # header line
         # nstates = int((len(header.split()) - 1)//4)
-        for i in range(0, nstates):
+        for i in range(1, nstates):
             transition_dipoles['s%d' %i] = []
         for line in f:
             a = line.split()
             time_steps_au.append(float(a[0]))
-            for i in range(0, nstates):
-                transition_dipoles['s%d' %i].append(float(a[i+1]))
+            for i in range(1, nstates):
+                transition_dipoles['s%d' %i].append(float(a[i]))
     data = {}
     for key in transition_dipoles.keys():
         data[key] = np.array(transition_dipoles[key])
