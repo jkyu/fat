@@ -16,31 +16,6 @@ This is done by the function collect_trajectories() and the helper functions it 
 '''
 ## Helper functions for computing fluorescence intensity ##
 
-def gaussian_convolution(egrid, tgrid, e0, t0, intensity, sigE=0.1, sigT=30):
-    '''
-    To convolve the intensity in time and energy, multiply the intensity
-    (a delta function) by gaussians, one centered on the transition 
-    frequency (written as an energy in units of eV) and the second
-    centered on the adaptive time step. Here, e0 and t0 are the centers
-    of these two gaussians respectively and egrid and tgrid are the grid points 
-    that we are using for our fluorescence plot. sigE and sigT are the
-    gaussian width parameters. The width = stdev = sqrt(variance).
-    The energy width is set to 0.15 eV (from Punwong paper) and the time width is 
-    150 fs (from Schmidt et al.) as default parameters for the convolution. 
-    Note that the Gaussian width of the laser pulse is measured as the
-    full-width half maximum (FWHM), where FWHM = 2 * sigma * sqrt(2 * ln 2) 
-    => FWHM ~= 2.3548200450309493 * sigma. Therefore, we choose sigma = 63.7
-    '''
-    fluorescence = np.zeros((len(tgrid), len(egrid)))
-    conv_T = intensity * np.exp( -((tgrid - t0) / sigT)**2 * (1./2.) ) * \
-            (1. / (sigT * np.sqrt(2.*np.pi)))
-    for i, cT in enumerate(conv_T):
-        conv_E = cT * np.exp( -((egrid - e0) / sigE)**2 * (1./2.) ) * \
-                (1. / (sigE * np.sqrt(2.*np.pi)))
-        fluorescence[i,:] = conv_E
-
-    return fluorescence
-
 def compute_intensity(en_gap, populations, transition_dipoles):
 
     # h = 4.135667662E-15 # this is h in eV*s
@@ -52,7 +27,7 @@ def compute_intensity(en_gap, populations, transition_dipoles):
 
 ## Functions that actually do stuff and get called by main
 
-def compute_fluorescence(initconds, datafiles, tgrid, wgrid, ex_state=1, outfile_name='fluorescence'):
+def compute_fluorescence(initconds, datafiles, tgrid, wgrid, ex_state=1, outfile_name='fluorescence', ewidth=0.15, twidth=150):
 
     npoints = len(tgrid)
     interp_grid = tgrid - tgrid[0] # zeros the grid for interpolation
@@ -81,10 +56,10 @@ def compute_fluorescence(initconds, datafiles, tgrid, wgrid, ex_state=1, outfile
 
                 en_gap = excited_energies - ground_energies # atomic units used in fluorescence calculation
                 intensities = compute_intensity(en_gap, populations, transition_dipoles)
-                interp_intensities = interpolate(interp_grid, time_steps, en_gap)
+                interp_intensities = interpolate(interp_grid, time_steps, intensities)
                 interp_gaps = interpolate(interp_grid, time_steps, en_gap) * 27.21138602
                 # ic_fl = approx_fluorescence(egrid, tgrid, interp_gaps, interp_intensities)
-                ic_fl = convolve(egrid, tgrid, interp_gaps, interp_grid, interp_intensities)
+                ic_fl = convolve(egrid, tgrid, interp_gaps, interp_grid, interp_intensities, e_width, t_width)
                 tbf_data[tbf_key] = ic_fl
                 fl_grid = fl_grid + ic_fl
 
@@ -124,8 +99,23 @@ def approx_fluorescence(egrid, tgrid, en_gap, intens):
 
     return fl_grid
 
-def convolve(egrid, tgrid, en_gap, tsteps, intens, sigE=0.15, sigT=65):
-
+def convolve(egrid, tgrid, en_gap, tsteps, intens, ewidth=0.15, twidth=150):
+    '''
+    To convolve the intensity in time and energy, multiply the intensity
+    (a delta function) by gaussians, one centered on the transition 
+    frequency (written as an energy in units of eV) and the second
+    centered on the adaptive time step. Here, e0 and t0 are the centers
+    of these two gaussians respectively and egrid and tgrid are the grid points 
+    that we are using for our fluorescence plot. sigE and sigT are the
+    gaussian width parameters. The width = stdev = sqrt(variance).
+    The energy width is set to 0.15 eV and the time width is 
+    150 fs (from Schmidt et al.) as default parameters for the convolution. 
+    Note that the Gaussian width of the laser pulse is measured as the
+    full-width half maximum (FWHM), where FWHM = 2 * sigma * sqrt(2 * ln 2) 
+    => FWHM ~= 2.3548200450309493 * sigma. 
+    '''
+    sigE = ewidth / 2.3548200450309493
+    sigT = twidth / 2.3548200450309493
     fl_grid = np.zeros((len(egrid), len(tgrid)))
     for idx1 in range(len(en_gap)):
         t0 = tsteps[idx1]
@@ -175,4 +165,6 @@ if __name__=='__main__':
     wgrid = np.linspace(100, 1140, npoints)
     ex_state = 1 # S1-S0 fluorescence. ex_state is 0 indexed, so S1 is ex_state=1
     outfile_name = 'fluorescence' # name of the pickle file saved to the data directory
-    compute_fluorescence(ics, datafiles, tgrid, wgrid, ex_state=ex_state, outfile_name=outfile_name)
+    ewidth = 0.15 # energy uncertainty - FWHM for gaussian convolution
+    twidth = 150 # time uncertainty - FWHM for gaussian convolution
+    compute_fluorescence(ics, datafiles, tgrid, wgrid, ex_state=ex_state, outfile_name=outfile_name, ewidth, twidth)
