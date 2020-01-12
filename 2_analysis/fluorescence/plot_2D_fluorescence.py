@@ -55,6 +55,13 @@ def plot_fluorescence(fgrid, wgrid, tgrid, figname='2D_fluorescence', fl_shift=0
     color scheme. 
     '''
 
+    if fl_shift > 0:
+        # Keep in mind that you're going to want to manually set the plotting ranges
+        # for the wavelength if you use the energy shift.
+        print('Shifting the theory spectrum to match experiment.')
+        egrid = [(1240./x - fl_shift) for x in wgrid]
+        wgrid = [int(1240./x) for x in egrid]
+
     print('Interpolating the fluorescence grid.')
     tgrid3, wgrid3, fgrid3 = interpolate_fluorescence(tgrid, wgrid, fgrid)
 
@@ -65,8 +72,7 @@ def plot_fluorescence(fgrid, wgrid, tgrid, figname='2D_fluorescence', fl_shift=0
     plt.rc('xtick',labelsize=ticksize)
     plt.rc('ytick',labelsize=ticksize)
 
-    cm = plt.get_cmap('rainbow')
-    # cm = plt.get_cmap('jet')
+    cm = plt.get_cmap('coolwarm')
     ngrid_cm = 51
     levels = np.linspace(np.min(fgrid3), np.max(fgrid3), ngrid_cm)
     fl_im = plt.contourf(tgrid3, wgrid3, fgrid3, cmap=cm, levels=levels, vmin=np.min(fgrid3), vmax=np.max(fgrid3))
