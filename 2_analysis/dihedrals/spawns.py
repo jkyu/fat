@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 import pickle
-import mdtraj as md
 from quantum_yield import compute_qy
 
 def sort_spawns(dihedral_data, dihe_key):

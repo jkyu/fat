@@ -1,7 +1,6 @@
 import os
 import sys
 import numpy as np
-import mdtraj as md
 import pickle
 import matplotlib.pyplot as plt
 

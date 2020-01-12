@@ -94,7 +94,7 @@ def process_trajectories(ics, datafiles, tgrid, nstates, angle_index, outfile_na
                 angle_traj = []
                 ''' Compute the angle for each frame. '''
                 for i in range(len(trajectory)):
-                    frame = trajectory.xyz[i] * 10.
+                    frame = trajectory[i]
                     angle = compute_angle(frame, angle_inds)
                     # ''' If the simulation tracks a trans->cis isomerization, we want our angle range to be [0,2pi].
                     # For cis->trans, we want the angle range to be [-pi,pi]. We want to be centered at our start 

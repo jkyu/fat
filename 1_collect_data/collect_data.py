@@ -1,6 +1,5 @@
 import glob
 import pickle
-import mdtraj as md
 import numpy as np
 import os
 import sys
@@ -144,13 +143,32 @@ def population_transfer(dirname, spawn_id):
 
     return a[1]
 
-def get_positions(xyzfile, prmtop):
-    '''
-    Use MDtraj to load the trajectories from a combination of the appropriate prmtop
-    file and position file (the latter from FMS).
-    '''
-    trajectory = md.load_xyz(xyzfile, prmtop)
-    return trajectory
+def get_positions(xyzfile):
+    ''' This parser might have broken the extensions automation. Keep that in mind
+    if bugs pop up. '''
+    frames_atoms = []
+    frames_positions = []
+    with open(xyzfile, 'rb') as f:
+        lines = [x for x in f]
+        natoms = int(lines[0])
+        nframes = int(len(lines) / (natoms+2))
+        for frame_idx in range(nframes):
+            coords = []
+            atom_labels = []
+            for atom_idx in range(natoms):
+                line = lines[frame_idx*(natoms+2) + atom_idx + 2]
+                line2 = line.rstrip().rsplit()
+                coord = []
+                atom_labels.append(line2[0])
+                coord.append(float(line2[1]))
+                coord.append(float(line2[2]))
+                coord.append(float(line2[3]))
+                coords.append(coord)
+            frames_positions.append(coords)
+            frames_atoms.append(atom_labels)
+    frames_positions = np.array(frames_positions, np.float)
+
+    return frames_positions, frames_atoms
 
 def get_initstate(dirname):
 
@@ -165,7 +183,7 @@ def get_initstate(dirname):
 
     return initstate
 
-def get_extension(extdir, prmtop):
+def get_extension(extdir):
     '''
     Read in coordinate information from AIMD extensions for ground state AIMS TBFs.
     The time grid associated with the extension is comuted from a time step and the
@@ -173,7 +191,7 @@ def get_extension(extdir, prmtop):
     terachem default: 0.5 fs. 
     '''
     xyzfile = extdir + 'scr.coord/coors.xyz'
-    trajectory_ext = md.load_xyz(xyzfile, prmtop)
+    trajectory_ext, _ = get_positions(xyzfile)
 
     aimd_input = open(extdir + 'aimd.in', 'r')
     tstep = 0.5 # fs
@@ -181,9 +199,8 @@ def get_extension(extdir, prmtop):
 
     return tgrid, trajectory_ext
 
-def get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False):
+def get_tbf_data(dirname, ic, tbf_id, extensions=False):
 
-    # prmtop   = dirname + '%s.prmtop' % sys_name
     enfile   = dirname + 'PotEn.%d' %tbf_id
     xyzfile  = dirname + 'positions.%d.xyz' %tbf_id
     popfile  = dirname + 'Amp.%d' %tbf_id
@@ -193,7 +210,7 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False):
     if not os.path.isfile(popfile):
         raise Exception('Directory for this IC does not have FMS outputs to process.')
 
-    trajectory = get_positions(xyzfile, prmtop)
+    trajectory, atom_labels = get_positions(xyzfile)
     time_steps_au, populations = get_populations(popfile)
     _, energies, nstates = get_energies(enfile)
     _, transition_dipoles = get_transition_dipoles(tdipfile, nstates)
@@ -218,9 +235,9 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False):
     resolving that. '''
     if os.path.exists(dirname+'ext_%d' %tbf_id) and extensions:
         extdir = dirname + 'ext_%d/' %tbf_id
-        time_steps_extension, trajectory_extension = get_extension(extdir, prmtop)
+        time_steps_extension, trajectory_extension = get_extension(extdir)
         time_steps_extension = time_steps_extension + time_steps[-1]
-        trajectory = md.join([trajectory, trajectory_extension[1:]])
+        trajectory = np.concatenate([trajectory, trajectory_extension[1:]])
         time_steps = np.concatenate([time_steps, time_steps_extension[1:]])
         populations_extension = np.zeros_like(time_steps)
         populations_extension[:len(populations)] = populations
@@ -237,10 +254,11 @@ def get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False):
     tbf_data['time_steps_au'] = time_steps
     tbf_data['populations'] = populations
     tbf_data['transition_dipoles'] = transition_dipoles
+    tbf_data['trajectory_atom_labels'] = atom_labels
 
     return tbf_data
 
-def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
+def collect_tbfs(initconds, dirlist, extensions=False):
     '''
     Gather TBFs and dump to disk as pickle files to make subsequent analyses faster. 
     Returns the number of states involved in the FMS simulations in order to facilitate the
@@ -248,7 +266,6 @@ def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
     Goes through all initial conditions given as a list of integer and processes the TBFs in
     a dict of FMS simulation directories (dirlist) corresponding to the integer associated with the
     initial condition. 
-    Takes prmtop as a topology file to help with parsing coordinates in MDTraj.
     Has a boolean option extensions for turning on/off the option to process AIMD extensions of 
     ground state TBFs.
     '''
@@ -263,7 +280,7 @@ def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
         tbf_id = 1
         print('%04d-%04d' %(ic, tbf_id))
 
-        tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop, extensions=False)
+        tbf_data = get_tbf_data(dirname, ic, tbf_id, extensions=False)
         tbf_data['spawn_info'] =  None
         tbf_data['state_id'] = get_initstate(dirname)
 
@@ -283,7 +300,7 @@ def collect_tbfs(initconds, dirlist, prmtop, extensions=False):
                     tbf_id = spawn['spawn_id']
                     print('%04d-%04d' %(ic, tbf_id))
 
-                    tbf_data = get_tbf_data(dirname, ic, tbf_id, prmtop, extensions)
+                    tbf_data = get_tbf_data(dirname, ic, tbf_id, extensions)
                     if not tbf_data==None:
                         tbf_data['spawn_info'] = spawn
                         tbf_data['state_id'] = spawn['spawn_state']
@@ -353,7 +370,6 @@ def write_fmsinfo(fmsdir, dirlist, nstates=None, labeled_ics=None):
 if __name__=='__main__':
 
     fmsdir = '../eth_data/' # Main directory containing all FMS simulations
-    topfile = '../ethylene.pdb' # this is the name of the topology file (.prmtop, .pdb, etc.)
     ic_dict = {}
 
     ''' collect_tbfs processes the individual FMS simulations and dumps all of the data to disk.
@@ -364,14 +380,14 @@ if __name__=='__main__':
     # dirlist1 = {}
     # for ic in ics1:
     #     dirlist1['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
-    # nstates1 = collect_tbfs(ics1, dirlist1, topfile, extensions=True)
+    # nstates1 = collect_tbfs(ics1, dirlist1, extensions=True)
 
     # label2 = 'set2'
     # ics2 = [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
     # dirlist2 = {}
     # for ic in ics2:
     #     dirlist2['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
-    # nstates2 = collect_tbfs(ics2, dirlist2, topfile, extensions=True)
+    # nstates2 = collect_tbfs(ics2, dirlist2, extensions=True)
     # 
     # ''' write_fmsinfo writes out a file that contains information that helps manage all of the FMS simulations. 
     # Leave ics argument blank if you don't care about distinguishing between FMS sets. '''
@@ -385,6 +401,6 @@ if __name__=='__main__':
     dirlist = {}
     for ic in ics:
         dirlist['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
-    collect_tbfs(ics, dirlist, topfile, extensions=False)
+    collect_tbfs(ics, dirlist, extensions=False)
     write_fmsinfo(fmsdir, dirlist)
 

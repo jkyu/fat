@@ -1,5 +1,4 @@
 from shutil import copyfile
-import mdtraj as md
 import numpy as np
 import os
 from scipy.optimize import curve_fit
@@ -22,8 +21,6 @@ def get_populations(ics, datadir, fmsdir, topfile):
 
     tp_pop = 0
     eth_pop = 0
-    tp_geoms = []
-    eth_geoms = []
     tp_pop_list = []
     eth_pop_list = []
     tp_gap_list = []
@@ -56,10 +53,8 @@ def get_populations(ics, datadir, fmsdir, topfile):
                     print('%s: %f' %(tbf_key, pop_transferred))
 
                     geomfile = fmsdir+'/%04d/Spawn.%d' %(ic, tbf['tbf_id'])
-                    spawn_geom = md.load_xyz(geomfile, topfile)
                     if tbf_key in tp_keys:
                         tp_pop = tp_pop + pop_transferred
-                        tp_geoms.append(spawn_geom)
                         tp_gap_list.append(min_gap)
                         tp_pop_list.append(pop_transferred)
                         # if not os.path.isdir('./tp'):
@@ -67,7 +62,6 @@ def get_populations(ics, datadir, fmsdir, topfile):
                         # copyfile(geomfile, './tp/%s.xyz' %(tbf_key))
                     elif tbf_key in eth_keys:
                         eth_pop = eth_pop + pop_transferred
-                        eth_geoms.append(spawn_geom)
                         eth_gap_list.append(min_gap)
                         eth_pop_list.append(pop_transferred)
                         # if not os.path.isdir('./eth'):

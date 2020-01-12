@@ -102,7 +102,7 @@ def process_trajectories(ics, datafiles, tgrid, nstates, dihedral_index, start_c
                 dihes_traj = []
                 ''' Compute the dihedral angle for each frame. '''
                 for i in range(len(trajectory)):
-                    frame = trajectory.xyz[i] * 10.
+                    frame = trajectory[i]
                     dihe_angle = compute_dihedral(frame, dihe_inds)
                     ''' If the simulation tracks a trans->cis isomerization, we want our angle range to be [0,2pi].
                     For cis->trans, we want the angle range to be [-pi,pi]. We want to be centered at our start 

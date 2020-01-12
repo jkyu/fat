@@ -81,7 +81,7 @@ def process_trajectories(ics, tgrid, datadir, single_index, double_index):
                 singles_traj = []
                 ''' Compute the dihedral angle for each frame. '''
                 for i in range(len(trajectory)):
-                    frame = trajectory.xyz[i] * 10.
+                    frame = trajectory[i]
                     single_bl = compute_distance(frame, single_inds)
                     singles_traj.append(single_bl)
                 singles_dict[single_name] = np.array(singles_traj)
@@ -91,7 +91,7 @@ def process_trajectories(ics, tgrid, datadir, single_index, double_index):
                 doubles_traj = []
                 ''' Compute the dihedral angle for each frame. '''
                 for i in range(len(trajectory)):
-                    frame = trajectory.xyz[i] * 10.
+                    frame = trajectory[i]
                     double_bl = compute_distance(frame, double_inds)
                     doubles_traj.append(double_bl)
                 doubles_dict[double_name] = np.array(doubles_traj)
@@ -183,7 +183,7 @@ def process_trajectories(ics, tgrid, datadir, single_index, double_index):
 
 '''
 The following single and double bonds are enumerated and indexed according
-to the geometry file so that we can use mdtraj to compute the bond lengths.
+to the geometry file so that we can compute the bond lengths.
 '''
 if __name__=='__main__':
     print('Indexing single and double bonds.')
