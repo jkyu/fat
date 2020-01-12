@@ -72,8 +72,13 @@ def plot_fluorescence(fgrid, wgrid, tgrid, figname='2D_fluorescence', fl_shift=0
     plt.rc('xtick',labelsize=ticksize)
     plt.rc('ytick',labelsize=ticksize)
 
-    cm = plt.get_cmap('jet')
+    # Construct a custom truncated jet colormap.
     ngrid_cm = 51
+    colors = [ (40, 80, 250), (15, 160, 240), (25, 200, 225), (100, 250, 190), (180, 240, 150), (220, 210, 120), (255, 165, 90), (255, 100, 50), (255, 0, 0) ]
+    colors = [ (x[0]/255., x[1]/255., x[2]/255.) for x in colors]
+    cmap_name = 'special'
+    cm = cl.LinearSegmentedColormap.from_list(cmap_name, colors, N=ngrid_cm)
+    # cm = plt.get_cmap('jet') # if you want to use the standard jet colormap.
     levels = np.linspace(np.min(fgrid3), np.max(fgrid3), ngrid_cm)
     fl_im = plt.contourf(tgrid3, wgrid3, fgrid3, cmap=cm, levels=levels, vmin=np.min(fgrid3), vmax=np.max(fgrid3))
     cb = fig.colorbar(fl_im, format='%.1f')
