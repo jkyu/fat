@@ -72,7 +72,7 @@ def plot_fluorescence(fgrid, wgrid, tgrid, figname='2D_fluorescence', fl_shift=0
     plt.rc('xtick',labelsize=ticksize)
     plt.rc('ytick',labelsize=ticksize)
 
-    cm = plt.get_cmap('coolwarm')
+    cm = plt.get_cmap('jet')
     ngrid_cm = 51
     levels = np.linspace(np.min(fgrid3), np.max(fgrid3), ngrid_cm)
     fl_im = plt.contourf(tgrid3, wgrid3, fgrid3, cmap=cm, levels=levels, vmin=np.min(fgrid3), vmax=np.max(fgrid3))
