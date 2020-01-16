@@ -83,7 +83,7 @@ def plot_fluorescence(fgrid, wgrid, tgrid, figname='2D_fluorescence', fl_shift=0
     fl_im = plt.contourf(tgrid3, wgrid3, fgrid3, cmap=cm, levels=levels, vmin=np.min(fgrid3), vmax=np.max(fgrid3))
     cb = fig.colorbar(fl_im, format='%.1f')
     cb.set_ticks( [ x for x in np.arange( np.min(fgrid3), np.max(fgrid3)+0.1, 0.1) ] )
-    # cb.set_label('Fluorescence Intensity', rotation=270, fontsize=labelsize)
+    cb.set_label('Fluorescence Intensity', rotation=270, labelpad=15, fontsize=labelsize)
 
     # Plot lineouts if requested by giving a list of lineout wavelengths
     if len(lineout_wls) > 0:

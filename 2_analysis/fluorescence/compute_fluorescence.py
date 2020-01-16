@@ -20,9 +20,7 @@ def compute_intensity(en_gap, populations, transition_dipoles):
 
     # h = 4.135667662E-15 # this is h in eV*s
     h = 2. * np.pi # hbar = 1 = h/2pi in atomic units
-    en_term = (en_gap / h)**3
-    pop_tdip_weight = populations * (transition_dipoles * 0.393456)**2
-    intensity = pop_tdip_weight * en_term
+    intensity = populations * (transition_dipoles)**2 * (en_gap / h)**3
     return intensity
 
 ## Functions that actually do stuff and get called by main
@@ -59,7 +57,7 @@ def compute_fluorescence(initconds, datafiles, tgrid, wgrid, ex_state=1, outfile
                 interp_intensities = interpolate(interp_grid, time_steps, intensities)
                 interp_gaps = interpolate(interp_grid, time_steps, en_gap) * 27.21138602
                 # ic_fl = approx_fluorescence(egrid, tgrid, interp_gaps, interp_intensities)
-                ic_fl = convolve(egrid, tgrid, interp_gaps, interp_grid, interp_intensities, e_width, t_width)
+                ic_fl = convolve(egrid, tgrid, interp_gaps, interp_grid, interp_intensities, ewidth, twidth)
                 tbf_data[tbf_key] = ic_fl
                 fl_grid = fl_grid + ic_fl
 
@@ -161,10 +159,10 @@ if __name__=='__main__':
     picklefiles = fmsinfo['datafiles']
     datafiles = [ datadir+x for x in picklefiles ] 
     npoints = 201
-    tgrid  = np.linspace(-90., 260., npoints)
-    wgrid = np.linspace(100, 1140, npoints)
+    tgrid  = np.linspace(-0., 260., npoints)
+    wgrid = np.linspace(1240/4., 1240/1.5, npoints)
     ex_state = 1 # S1-S0 fluorescence. ex_state is 0 indexed, so S1 is ex_state=1
     outfile_name = 'fluorescence' # name of the pickle file saved to the data directory
-    ewidth = 0.15 # energy uncertainty - FWHM for gaussian convolution
+    ewidth = 0.20 # energy uncertainty - FWHM for gaussian convolution
     twidth = 150 # time uncertainty - FWHM for gaussian convolution
-    compute_fluorescence(ics, datafiles, tgrid, wgrid, ex_state=ex_state, outfile_name=outfile_name, ewidth, twidth)
+    compute_fluorescence(ics, datafiles, tgrid, wgrid, ex_state=ex_state, outfile_name=outfile_name, ewidth=ewidth, twidth=twidth)
