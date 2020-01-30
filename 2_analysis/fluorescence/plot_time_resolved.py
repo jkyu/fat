@@ -148,7 +148,7 @@ def integrate_fluorescence_time(fl, wgrid, tgrid):
 
     return fl_1D, egrid
 
-def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescence', compute_shift=False, steady_state_fl_file='./expt_data/steadystate.txt', expt_data_dir='./expt_data/', tshift=0):
+def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescence', compute_shift=False, steady_state_fl_file='./expt_data/steadystate.txt', expt_data_dir='./expt_data/'):
 
     ''' The steady_state_fl_file argument points to reference experimental steady state fluorescence 
     data in txt format. The expt_data_dir argument points to a directory containing the experimental
@@ -224,16 +224,14 @@ def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescen
         plt.plot(tgrid, slices[i], linewidth=2.0, color=colors[1], linestyle=styles[i])
         plt.errorbar(tgrid[(i*5)::10], slices[i][(i*5)::10], yerr=error_slices[i][(i*5)::10], color=colors[1], linewidth=0, capsize=2.0, elinewidth=0.8, ecolor=error_colors[i], linestyle=styles[i], label='AIMS, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_aims[i]))
         ''' The following three lines plot the exp fit for debugging. '''
-        # tmax = np.argmax(slices[i]) 
-        # plt.plot(tgrid-tgrid[tmax]+tshift, slices[i], label='AIMS, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_aims[i]), linewidth=2.0, color=colors[0], linestyle=styles[i])
-        # plt.plot(tgrid+tshift, aims_fits[i], label='Exp Fit, %d nm' %(slice_wls[i]), linewidth=1.0, color=colors[0], linestyle=styles[i]) # exp fits for debugging
+        tmax = np.argmax(slices[i]) 
+        plt.plot(tgrid+tgrid[tmax], aims_fits[i], label='Exp Fit, %d nm' %(slice_wls[i]), linewidth=1.0, color=colors[0], linestyle=styles[i]) # exp fits for debugging
 
     for i in range(len(slice_wls)):
-        plt.plot(expt_t+tshift, expt_slices[i], label='Expt, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_expt[i]), linewidth=2.0, color=colors[0], linestyle=styles[i])
+        plt.plot(expt_t, expt_slices[i], label='Expt, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_expt[i]), linewidth=2.0, color=colors[0], linestyle=styles[i])
         ''' The following three lines plot the exp fit for debugging. '''
-        # tmax = np.argmax(expt_slices[i]) 
-        # plt.plot(expt_t-expt_t[tmax]+tshift, expt_slices[i], label='Expt, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_expt[i]), linewidth=2.0, color=colors[0], linestyle=styles[i])
-        # plt.plot(expt_t+tshift, expt_fits[i], label='Exp Fit, %d nm' %(slice_wls[i]), linewidth=1.0, color=colors[0], linestyle=styles[i]) # exp fits for debugging
+        tmax = np.argmax(expt_slices[i]) 
+        plt.plot(expt_t+expt_t[tmax], expt_fits[i], label='Exp Fit, %d nm' %(slice_wls[i]), linewidth=1.0, color=colors[0], linestyle=styles[i]) # exp fits for debugging
 
     # plt.axis([-100, 1000, 0, 1.3])
     plt.xlabel('Time [fs]', fontsize=labelsize)
