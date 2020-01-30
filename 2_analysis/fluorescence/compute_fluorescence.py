@@ -158,8 +158,8 @@ if __name__=='__main__':
     ics = fmsinfo['ics']
     picklefiles = fmsinfo['datafiles']
     datafiles = [ datadir+x for x in picklefiles ] 
-    npoints = 201
-    tgrid  = np.linspace(-0., 260., npoints)
+    npoints = 51
+    tgrid  = np.linspace(-40., 260., npoints)
     wgrid = np.linspace(1240/4., 1240/1.5, npoints)
     ex_state = 1 # S1-S0 fluorescence. ex_state is 0 indexed, so S1 is ex_state=1
     outfile_name = 'fluorescence' # name of the pickle file saved to the data directory

@@ -33,12 +33,11 @@ tbf_data = data['tbf_fluorescence']
 keys = [x for x in tbf_data.keys()]
 
 fl_grid = compute_fluorescence(tbf_data, keys)
-normalizer = np.max(fl_grid)
 
 print('Resampling ICs and recomputing the fluorescence.')
 sampled_ics = [ [x for x in np.random.choice(ics, size=len(ics), replace=True)] for _ in range(1000) ]
 sampled_keys = [ [x for x in keys if int(x.split('-')[0]) in ic_subset] for ic_subset in sampled_ics ]
-sampled_grids = np.array([ (compute_fluorescence(tbf_data, key_subset) / normalizer) for key_subset in sampled_keys ])
+sampled_grids = np.array([ compute_fluorescence(tbf_data, key_subset) for key_subset in sampled_keys ])
 
 grid_error = np.std(sampled_grids, axis=0)
 

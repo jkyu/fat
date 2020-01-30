@@ -86,7 +86,6 @@ def fl_slices(fl, wgrid, tgrid, slices_wl, shift, width=0., error=None):
     if error:
         er = error['fluorescence_error']
     egrid = np.array([1240./x for x in wgrid])
-    # slices_wl = [650, 800]
     slices_ev = [ 1240./x for x in slices_wl ]
     slices_shifted = [ x+shift for x in slices_ev ]
 
@@ -101,17 +100,14 @@ def fl_slices(fl, wgrid, tgrid, slices_wl, shift, width=0., error=None):
             idx_low  = np.argmin(np.abs((egrid - (x-width)))) # long wavelength
             idx_high = np.argmin(np.abs((egrid - (x+width)))) # short wavelength
             slice_idx.append([int(x) for x in range(idx_high, idx_low)])
-            # idx = np.argmin(np.abs((egrid - x)))
-            # slice_idx.append([idx])
 
     slices = []
     er_slices = []
     for idx in slice_idx:
-        # print(egrid[idx[0]]) # print the energy corresponding to the wavelength
         fl_slice = np.array(fl[:, idx[0]])
-        fl_slice = fl_slice / np.max(fl_slice)
         er_slice = np.array(er[:, idx[0]])
         er_slice = er_slice / np.max(fl_slice)
+        fl_slice = fl_slice / np.max(fl_slice)
         slices.append(fl_slice)
         er_slices.append(er_slice)
 
@@ -155,9 +151,6 @@ def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescen
     data containing single wavelength fluorescence traces named by their wavelength.txt. 
     This needs work, obviously. '''
 
-    print('Normalizing the fluorescence signal.')
-    fl = fl / np.max(fl)
-
     ''' Optional flag for computing the energy shift to match the fluorescence maximum of
     the experimental data by comparing steady state fluorescence spectra. '''
     if compute_shift:
@@ -191,20 +184,20 @@ def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescen
     exponential fit is taken to start at the fluorescence maximum. '''
     taus_aims = []
     taus_expt = []
-    # expt_fits = [] # if you want to plot the exp fit for debugging reasons
-    # aims_fits = []
+    expt_fits = [] # if you want to plot the exp fit for debugging reasons
+    aims_fits = []
     for i, wl in enumerate(slice_wls):
         tmax = np.argmax(expt_slices[i])
         popt, pcov = exp_fit(expt_t[tmax:] - expt_t[tmax], expt_slices[i][tmax:])
         taus_expt.append(1./popt[0]+expt_t[tmax])
-        # fit = exp_func(expt_t, *popt) # exp fits for debugging
-        # expt_fits.append(fit) # exp fits for debugging 
+        fit = exp_func(expt_t, *popt) # exp fits for debugging
+        expt_fits.append(fit) # exp fits for debugging 
         print('%d nm experimental decay constant: %f' %(wl, (1./popt[0]+expt_t[tmax])))
         tmax = np.argmax(slices[i])
         popt, pcov = exp_fit(tgrid[tmax:] - tgrid[tmax], slices[i][tmax:])
         taus_aims.append(1./popt[0]+tgrid[tmax])
-        # fit = exp_func(tgrid, *popt) # exp fits for debugging
-        # aims_fits.append(fit) # exp fits for debugging 
+        fit = exp_func(tgrid, *popt) # exp fits for debugging
+        aims_fits.append(fit) # exp fits for debugging 
         print('%d nm AIMS decay constant: %f' %(wl, (1./popt[0]+tgrid[tmax])))
 
     '''
@@ -221,19 +214,19 @@ def run(fl, fl_error, wgrid, tgrid, slice_wls, figname='time-resolved-fluorescen
     styles = ['-', '--']
 
     for i in range(len(slice_wls)): 
-        plt.plot(tgrid, slices[i], linewidth=2.0, color=colors[1], linestyle=styles[i])
-        plt.errorbar(tgrid[(i*5)::10], slices[i][(i*5)::10], yerr=error_slices[i][(i*5)::10], color=colors[1], linewidth=0, capsize=2.0, elinewidth=0.8, ecolor=error_colors[i], linestyle=styles[i], label='AIMS, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_aims[i]))
+        plt.plot(tgrid, slices[i], linewidth=2.0, color=colors[1], linestyle=styles[i], label='AIMS, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_aims[i]))
+        plt.errorbar(tgrid[(i*5)::10], slices[i][(i*5)::10], yerr=error_slices[i][(i*5)::10], color=colors[1], linewidth=0, capsize=2.0, elinewidth=0.8, ecolor=error_colors[i], linestyle=styles[i])
         ''' The following three lines plot the exp fit for debugging. '''
         tmax = np.argmax(slices[i]) 
-        plt.plot(tgrid+tgrid[tmax], aims_fits[i], label='Exp Fit, %d nm' %(slice_wls[i]), linewidth=1.0, color=colors[0], linestyle=styles[i]) # exp fits for debugging
+        plt.plot(tgrid+tgrid[tmax], aims_fits[i], linewidth=1.0, color=colors[1], linestyle=styles[i]) # exp fits for debugging
 
     for i in range(len(slice_wls)):
         plt.plot(expt_t, expt_slices[i], label='Expt, %d nm, $\\tau=$%d fs' %(slice_wls[i], taus_expt[i]), linewidth=2.0, color=colors[0], linestyle=styles[i])
         ''' The following three lines plot the exp fit for debugging. '''
         tmax = np.argmax(expt_slices[i]) 
-        plt.plot(expt_t+expt_t[tmax], expt_fits[i], label='Exp Fit, %d nm' %(slice_wls[i]), linewidth=1.0, color=colors[0], linestyle=styles[i]) # exp fits for debugging
+        plt.plot(expt_t+expt_t[tmax], expt_fits[i], linewidth=1.0, color=colors[0], linestyle=styles[i]) # exp fits for debugging
 
-    # plt.axis([-100, 1000, 0, 1.3])
+    plt.axis([-100, 600, 0, 1.3])
     plt.xlabel('Time [fs]', fontsize=labelsize)
     plt.ylabel('Fluorescence Intensity [au]', fontsize=labelsize)
     plt.legend(loc='best', fontsize=legendsize, frameon=False)
