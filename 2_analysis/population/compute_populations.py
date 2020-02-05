@@ -56,10 +56,9 @@ def get_populations(ics, datafiles, tgrid, nstates):
         for tbf_key in data.keys():
 
             tbf = data[tbf_key]
-            state_id = tbf['state_id']
-            # print('%s, state s%d' %(tbf_key, state_id))
+            tbf_state = tbf['spawn_info']['tbf_state']
 
-            states['s%d' %state_id].append(tbf_key)
+            states['s%d' %tbf_state].append(tbf_key)
 
             time_steps = tbf['time_steps']
             if time_steps[-1] > ic_tfinal:
@@ -129,7 +128,7 @@ Can use a coarser time grid than is used here and it shouldn't change the result
 if __name__=='__main__':
 
     datadir = '../../1_collect_data/'
-    tgrid = np.arange(0, 250, 5) # edit the last number to change the grid spacing
+    tgrid = np.arange(0, 800, 5) # edit the last number to change the grid spacing
     fmsinfo = pickle.load(open(datadir+'/data/fmsinfo.pickle', 'rb'))
     picklefiles = fmsinfo['datafiles']
     datafiles = [ datadir+x for x in picklefiles ] 

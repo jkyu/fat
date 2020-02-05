@@ -108,9 +108,21 @@ def get_transition_dipoles(tdipfile, nstates):
 
     return time_steps_au, data
 
-def get_spawn_info(dirname, ic):
+def get_spawn_info(dirname, ic, initstate):
 
     spawns = []
+    # Special case for the initial TBF 
+    spawn = {}
+    spawn['spawn_time']    = None
+    spawn['spawn_time_au'] = None
+    spawn['tbf_id']        = int(1)
+    spawn['tbf_state']     = int(initstate)
+    spawn['parent_id']     = None
+    spawn['parent_state']  = None
+    spawn['initcond']      = ic
+    spawn['population_transferred'] = None
+    spawns.append(spawn)
+    # Iterate through spawned TBFs
     if os.path.isfile(dirname + 'Spawn.log'):
         with open(dirname + 'Spawn.log', 'rb') as f:
             _ = f.readline()
@@ -119,8 +131,8 @@ def get_spawn_info(dirname, ic):
                 a = line.split()
                 spawn['spawn_time']    = float(a[1]) * 0.024188425
                 spawn['spawn_time_au'] = float(a[1])
-                spawn['spawn_id']      = int(a[3])
-                spawn['spawn_state']   = int(a[4]) - 1 # since these are 1-indexed
+                spawn['tbf_id']        = int(a[3])
+                spawn['tbf_state']     = int(a[4]) - 1 # since these are 1-indexed
                 spawn['parent_id']     = int(a[5])
                 spawn['parent_state']  = int(a[6]) - 1
                 spawn['initcond']      = ic
@@ -274,39 +286,21 @@ def collect_tbfs(initconds, dirlist, extensions=False):
         data = {}
         dirname = dirlist['%d' %ic]
 
-        '''
-        Parent TBF
-        '''
-        tbf_id = 1
-        print('%04d-%04d' %(ic, tbf_id))
+        initstate = get_initstate(dirname)
+        spawn_info = get_spawn_info(dirname, ic, initstate)
 
-        tbf_data = get_tbf_data(dirname, ic, tbf_id, extensions=False)
-        tbf_data['spawn_info'] =  None
-        tbf_data['state_id'] = get_initstate(dirname)
+        for i, spawn in enumerate(spawn_info):
 
-        key = '%04d-%04d' %(ic, tbf_id)
-        data[key] = tbf_data
-        print('Finish')
+            tbf_id = spawn['tbf_id']
+            print('%04d-%04d' %(ic, tbf_id))
 
-        if os.path.isfile(dirname + 'Spawn.log'):
-            spawn_info = get_spawn_info(dirname, ic)
-            ''' 
-            Spawned TBFs
-            '''
-            for i, spawn in enumerate(spawn_info):
-
-                if len(spawn) > 0:
-
-                    tbf_id = spawn['spawn_id']
-                    print('%04d-%04d' %(ic, tbf_id))
-
-                    tbf_data = get_tbf_data(dirname, ic, tbf_id, extensions)
-                    if not tbf_data==None:
-                        tbf_data['spawn_info'] = spawn
-                        tbf_data['state_id'] = spawn['spawn_state']
-                        key = '%04d-%04d' %(ic, tbf_id)
-                        data[key] = tbf_data
-                    print('Finish')
+            tbf_data = get_tbf_data(dirname, ic, tbf_id, extensions)
+            if not tbf_data==None:
+                tbf_data['spawn_info'] = spawn
+                tbf_data['state_id'] = spawn['tbf_state']
+                key = '%04d-%04d' %(ic, tbf_id)
+                data[key] = tbf_data
+            print('Finish')
 
         if not os.path.isdir('./data/'):
             os.mkdir('./data/')

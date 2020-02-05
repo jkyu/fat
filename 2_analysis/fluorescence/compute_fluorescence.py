@@ -42,9 +42,9 @@ def compute_fluorescence(initconds, datafiles, tgrid, wgrid, ex_state=1, outfile
         for tbf_key in data.keys():
             
             tbf = data[tbf_key]
-            state_id = tbf['state_id']
+            tbf_state = tbf['spawn_info']['tbf_state']
 
-            if state_id==ex_state: # 0-indexed. e.g., ex_state=1 is fluorescence from S1
+            if tbf_state==ex_state: # 0-indexed. e.g., ex_state=1 is fluorescence from S1
                 print('Computing fluorescence signal from TBF %s' %tbf_key)
                 time_steps = tbf['time_steps']
                 populations = tbf['populations']

@@ -80,7 +80,7 @@ def process_trajectories(ics, datafiles, tgrid, nstates, dihedral_index, start_c
     raw_angles = {}
     raw_tsteps = {}
     raw_pops = {}
-    state_ids = {}
+    tbf_states = {}
 
     ''' Compute the dihedral angles. The data dictionary is indexed as IC -> TBF Key -> Dihedral Name -> Frame Number '''
     for ic, datafile in zip(ics, datafiles):
@@ -89,9 +89,9 @@ def process_trajectories(ics, datafiles, tgrid, nstates, dihedral_index, start_c
         for tbf_key in data.keys():
 
             tbf = data[tbf_key]
-            state_id = tbf['state_id']
-            state_ids[tbf_key] = state_id
-            print('%s, state s%d' %(tbf_key, state_id))
+            tbf_state = tbf['spawn_info']['tbf_state']
+            tbf_states[tbf_key] = tbf_state
+            print('%s, state s%d' %(tbf_key, tbf_state))
 
             time_steps = tbf['time_steps']
             trajectory = tbf['trajectory']
@@ -174,8 +174,8 @@ def process_trajectories(ics, datafiles, tgrid, nstates, dihedral_index, start_c
     data2['dihedrals_state_specific'] = interp_dihedrals2
     data2['dihedrals_time_zeroed'] = interp_zeroed
     data2['populations'] = interp_populations
-    data2['state_ids'] = state_ids
-    data2['tbf_keys'] = [x for x in state_ids.keys()]
+    data2['tbf_states'] = tbf_states
+    data2['tbf_keys'] = [x for x in tbf_states.keys()]
     data2['tgrid'] = tgrid
 
     print('Dumping interpolated amplitudes to dihedrals.pickle')
