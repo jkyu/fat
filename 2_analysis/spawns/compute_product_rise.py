@@ -56,10 +56,10 @@ def get_populations(ics, tgrid, datadir, nstates, cis_keys, trans_keys):
         for tbf_key in data.keys():
 
             tbf = data[tbf_key]
-            state_id = tbf['state_id']
-            # print('%s, state s%d' %(tbf_key, state_id))
+            tbf_state = tbf['spawn_info']['tbf_state']
+            # print('%s, state s%d' %(tbf_key, tbf_state))
 
-            states['s%d' %state_id].append(tbf_key)
+            states['s%d' %tbf_state].append(tbf_key)
 
             time_steps = tbf['time_steps']
             if time_steps[-1] > ic_tfinal:

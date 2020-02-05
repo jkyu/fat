@@ -10,7 +10,7 @@ def sort_spawns(spawn_times, angle_data, angle_key, dihedral_data, dihe_key, qy_
 
     ics = dihedral_data['ics']
     tbf_keys  = angle_data['tbf_keys']
-    state_ids = angle_data['state_ids']
+    tbf_states = angle_data['tbf_states']
     angles    = angle_data['angles_state_specific']
     dihedrals = dihedral_data['dihedrals_state_specific']
     populations = angle_data['populations']
@@ -23,7 +23,7 @@ def sort_spawns(spawn_times, angle_data, angle_key, dihedral_data, dihe_key, qy_
     spawn_ds = {}
     spawn_as = {}
     spawn_ps = {}
-    gs_keys = [ x for x in tbf_keys if state_ids[x]==0 ]
+    gs_keys = [ x for x in tbf_keys if tbf_states[x]==0 ]
     for key in gs_keys:
         angs = angles[key][angle_key]
         dihs = dihedrals[key][dihe_key]

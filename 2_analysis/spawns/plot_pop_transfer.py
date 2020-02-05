@@ -31,12 +31,12 @@ def get_populations(ics, datadir, fmsdir, topfile):
         for tbf_key in data.keys():
 
             tbf = data[tbf_key]
-            state_id = tbf['state_id']
-            if state_id==0:
+            tbf_state = tbf['spawn_info']['tbf_state']
+            if tbf_state==0:
                 parent_id = tbf['spawn_info']['parent_id']
                 if parent_id == 1:
 
-                    states['s%d' %state_id].append(tbf_key)
+                    states['s%d' %tbf_state].append(tbf_key)
                     pop = tbf['populations']
                     if len(pop) > 20:
                         pop_transferred = pop[20]

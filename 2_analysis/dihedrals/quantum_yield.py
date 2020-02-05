@@ -102,7 +102,7 @@ if __name__=='__main__':
     dihedrals = dihedral_data['dihedrals_state_specific']
     populations = dihedral_data['populations']
     ''' Take only the subset of TBFs that have decayed to the ground state '''
-    state_ids = dihedral_data['state_ids']
+    tbf_states = dihedral_data['tbf_states']
     tbf_keys = dihedral_data['tbf_keys']
-    gs_keys = [ x for x in tbf_keys if state_ids[x]==0 ]
+    gs_keys = [ x for x in tbf_keys if tbf_states[x]==0 ]
     compute_qy(dihedrals, populations, dihe_keys[0], gs_keys, save_qy=True)

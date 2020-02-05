@@ -19,14 +19,14 @@ def sort_spawns(ics, datadir, nstates):
 
             tbf = data[tbf_key]
             tbf_id = tbf['tbf_id']
-            state_id = tbf['state_id']
-            print(tbf_key, tbf_id, state_id)
-            if tbf_id>1 and state_id==0:
+            tbf_state = tbf['spawn_info']['tbf_state']
+            print(tbf_key, tbf_id, tbf_state)
+            if tbf_id>1 and tbf_state==0:
                 
                 parent_id = tbf['spawn_info']['parent_state']
-                print('%s spawns on state s%d from state s%d' %(tbf_key, state_id, parent_id))
+                print('%s spawns on state s%d from state s%d' %(tbf_key, tbf_state, parent_id))
 
-                states['s%d' %state_id].append(tbf_key)
+                states['s%d' %tbf_state].append(tbf_key)
                 spawn_times[tbf_key] = tbf['time_steps'][0]
 
     data = {}

@@ -297,7 +297,7 @@ def collect_tbfs(initconds, dirlist, extensions=False):
             tbf_data = get_tbf_data(dirname, ic, tbf_id, extensions)
             if not tbf_data==None:
                 tbf_data['spawn_info'] = spawn
-                tbf_data['state_id'] = spawn['tbf_state']
+                tbf_data['tbf_state'] = spawn['tbf_state']
                 key = '%04d-%04d' %(ic, tbf_id)
                 data[key] = tbf_data
             print('Finish')
