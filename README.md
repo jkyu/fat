@@ -1,4 +1,4 @@
-# fyu90
+# fat = FMS90 Analysis Tool
 Python tools to streamline the analysis of FMS90 dynamics and facilitate the computation of observable properties. 
 This set of tools handles extracting raw data from the FMS90 outputs and storing them to disk (necessary in the case of large systems, e.g. proteins).
 There are then also a variety of scripts for computing various properties, such as fluorescence and any geometric properties, and interpolating to a grid (necessary for averaging any properties due to the adaptive time stepping of FMS).
