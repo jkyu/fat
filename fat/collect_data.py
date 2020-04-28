@@ -432,7 +432,7 @@ class fat(object):
                 - dirlist: a list of strings specifying the path to each FMS90 simulation directory. 
         """
         fmsinfo = {}
-        sim_list = glob.glob('%s/*.pickle' %datadir)
+        sim_list = glob.glob('%s/*[0-9].pickle' %datadir)
         sim_list = [x for x in sim_list if 'fmsinfo' not in x]
         sim_list.sort()
     
