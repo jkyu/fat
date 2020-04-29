@@ -10,7 +10,7 @@ import sys
 Computation of the population dynamics for all electronic states.
 The populations are placed on a uniform time grid and averaged over all AIMS simulations.
 This information is dumped to a pickled file and saved to a data directory to be plotted.
-Written by jkyu
+Authored by Jimmy K. Yu (jkyu).
 """
 def compute_populations(ics, datafiles, tgrid, nstates, datadir=None, save_to_disk=True):
     """
@@ -194,3 +194,51 @@ def plot_population_dynamics(tgrid, populations, errors, exp_fit, time_constant,
             os.mkdir(figdir)
         plt.savefig('%s/%s.pdf' %(figdir,figname), dpi=300)
 
+def plot_population_dynamics_single_state(tgrid, average_populations, errors, ic_populations, target_state, figdir=None, figname='population_dynamics_single_state'):
+    """
+    Arguments:
+        1) tgrid: array containing the uniform time grid points
+        2) average_populations: dictionary containing the average population dynamics
+        3) errors: dictionary containing the bootstrapping errors computed for the average population dynamics
+        4) ic_populations: dictionary containing the population dynamics for individual ICs
+        5) target_state: int specifying the adiabatic state of interest (0-indexed)
+        6) figdir: path to directory for saving the figure (Default: None -- pass in a path to save figure)
+        7) figname: string giving the name of the population dynamics figure (Default: population_dynamics)
+    Description: 
+        Automated plotter for population dynamics for a single adiabatic state.
+        This includes the individual ICs for insight as to the impact of individual ICs on the overall population decay/rise.
+    Returns:
+        Nothing, but saves a PDF of the population dynamics figure. 
+    """
+    rcParams.update({'figure.autolayout': True})
+    fig = plt.figure(figsize=(6,5))
+    labelsize = 16
+    ticksize = 14
+    plt.rc('xtick',labelsize=ticksize)
+    plt.rc('ytick',labelsize=ticksize)
+    
+    avg_pop_target = average_populations['s%d' %target_state]
+    ic_pop_target = ic_populations['s%d' %target_state]
+    error_target = errors['s%d' %target_state]
+    nics = np.shape(ic_pop_target)[0]
+    for i in range(nics):
+        single = ic_pop_target[i,:]
+        if i==0:
+            plt.plot(tgrid, single, linestyle='-', linewidth=0.5, color='silver', label='$S_%d$ (Single IC)' %target_state)
+        else:
+            plt.plot(tgrid, single, linestyle='-', linewidth=0.5, color='silver')
+    label = '$S_%d$ (Averaged)' %target_state
+    plt.errorbar(tgrid, avg_pop_target, error_target, color='firebrick', linewidth=3.0, elinewidth=1, ecolor='lightcoral', capsize=0.1, label=label)
+
+    plt.ylim([0, 1.1])
+    plt.xlim([tgrid[0], tgrid[-1]])
+    plt.ylabel('Fractional Population', fontsize=labelsize)
+    plt.xlabel('Time [fs]', fontsize=labelsize)
+    plt.xticks(fontsize=ticksize)
+    plt.yticks(fontsize=ticksize)
+    plt.legend(loc='best', frameon=False, fancybox=False, fontsize=ticksize, numpoints=1)
+    
+    if figdir:
+        if not os.path.isdir(figdir):
+            os.mkdir(figdir)
+        plt.savefig('%s/%s.pdf' %(figdir,figname), dpi=300)

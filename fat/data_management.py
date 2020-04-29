@@ -1,7 +1,7 @@
 import numpy as np
 """
 Data management and manipulation tools for data structures in fat.
-Written by jkyu
+Authored by Jimmy K. Yu (jkyu). 
 """
 def interpolate_to_grid(grid, tsteps, data, extended=False):
     """
