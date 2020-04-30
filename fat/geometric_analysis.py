@@ -186,7 +186,6 @@ def compute_geometric_quantities(ics, datafiles, tgrid, gq_index, start_trans=Fa
 
             raw_gq['%s' %tbf_key] = raw_gq_data
             raw_tsteps['%s' %tbf_key] = time_steps
-    # print(raw_gq['0000-0001'])
 
     # Interpolate the trajectories to the uniform grid
     interp_gq = {}
@@ -197,8 +196,6 @@ def compute_geometric_quantities(ics, datafiles, tgrid, gq_index, start_trans=Fa
             gq_trajectory = raw_gq[tbf_key][gq_name]
             interp_gq_data[tbf_key] = interpolate_to_grid(tgrid, tsteps, gq_trajectory, extended=True, geometric_quantity=True)
         interp_gq[gq_name] = interp_gq_data
-        print(gq_name)
-        print(interp_gq_data['0000-0001'])
 
     # Save data
     geometric_analysis = {}

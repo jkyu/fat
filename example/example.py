@@ -36,13 +36,14 @@ def example_population(datadir, figdir, tgrid):
     exp_fit, time_constant, time_constant_error = compute_exponential_fit(tgrid, average_populations, ic_populations, target_state)
     print('Population decay constant: $\\tau=%d \pm %d fs)' %(time_constant, time_constant_error))
 
+    # Plot population dynamics
     errors = population_dynamics['errors']
     plot_population_dynamics(tgrid, average_populations, errors, exp_fit, time_constant, time_constant_error, figdir=figdir)
     plot_population_dynamics_single_state(tgrid, average_populations, errors, ic_populations, target_state, figdir=figdir)
 
 def example_geometric_quantities(datadir, figdir, tgrid):
     """
-    Example for computing geometric quantities for the AIMS simulations.
+    Example for computing geometric quantities (dihedral angle, angle, bond distances) for the AIMS simulations.
     """
     print('\n>>  Geometric quantities module <<')
     fmsinfo = pickle.load(open('%s/fmsinfo.pickle' %datadir, 'rb'))
@@ -61,11 +62,10 @@ def example_geometric_quantities(datadir, figdir, tgrid):
 
     geometric_analysis = pickle.load(open('%s/geometric_analysis.pickle' %datadir, 'rb'))
     averaged_gqs = geometric_analysis['averaged_geometric_quantities']
-    print(averaged_gqs)
     errors = geometric_analysis['averaged_geometric_quantities']
 
+    # Plot results averaged over all ICs
     plot_averaged_geometric_quantities(tgrid, averaged_gqs, errors, figdir=figdir)
-
 
 if __name__=='__main__':
 
