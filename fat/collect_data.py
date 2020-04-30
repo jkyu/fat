@@ -17,24 +17,25 @@ class fat(object):
         3) datadir: a string specifying the location of the pickle file dump [Default: ./data/]
         4) partitioned_ics: a dictionary containing a user-specified partitioning of the ICs. This is not required and has a niche use case. [Default: None]
         5) parse_extensions: a boolean to specify whether or not to process single state AIMD extensions [Default: False]
-        6) save_to_disk: a boolean flag for saving the individual FMS data files to disk [Default: True]
+        6) save_to_disk_ic: a boolean flag for saving the individual FMS data files to disk [Default: True]
+        7) save_to_disk_full: a boolean flag for saving one file containing the data for the full FMS simulation to disk [Default: False]
     Initiating the object also calls two functions:
         collect_tbfs() parses data from the FMS outputs for each independent AIMS simulation
         write_fmsinfo() provides parameters for the full AIMS simulation
-    If the data is not dumped to disk, it can be accessed directly within the fmsdata variable of the object. 
-    This is OK if the system is small and the simulation is short, e.g., ethylene.  
+    If the data is not dumped to disk by initial condition, it can be accessed directly within the fmsdata variable of the object or by saving the full FMS simulation. 
+    This is OK if the system is small and the simulation is short, e.g., ethylene.
     By default, one pickle file is for each FMS simulation is saved to disk because the data processes is incredibly slow when systems are large, e.g, proteins.
     Because these pickle files are stored separately, the data for the full simulation does not need to be processed in one go and updates to a single simulation do not require rerunning the data collection procedure. 
     fmsdata is a dictionary of the individual AIMS simulations indexed by the initial condition number. 
     """
-    def __init__(self, ics, dirlist, datadir='./data/', partitioned_ics=None, parse_extensions=False, save_to_disk=True):
+    def __init__(self, ics, dirlist, datadir='./data/', partitioned_ics=None, parse_extensions=False, save_to_disk_ic=True, save_to_disk_full=False):
 
         self.ics = ics
         self.dirlist = dirlist
         self.parse_extensions = parse_extensions
 
-        self.fmsdata, self.nstates = self.collect_tbfs(self.ics, self.dirlist, datadir, self.parse_extensions, save_to_disk)
-        if save_to_disk: 
+        self.fmsdata, self.nstates, self.tbf_states = self.collect_tbfs(self.ics, self.dirlist, datadir, self.parse_extensions, save_to_disk_ic, save_to_disk_full)
+        if save_to_disk_ic: 
             self.fmsinfo = self.write_fmsinfo(self.dirlist, datadir, self.nstates, partitioned_ics)
 
     def get_populations(self, popfile):
@@ -366,22 +367,25 @@ class fat(object):
     
         return tbf_data
     
-    def collect_tbfs(self, initconds, dirlist, datadir, parse_extensions=False, save_to_disk=True):
+    def collect_tbfs(self, initconds, dirlist, datadir, parse_extensions=False, save_to_disk_ic=True, save_to_disk_full=False):
         """
         Arguments: 
             1) initconds: a list of integers that index the initial conditions [Required]
             2) dirlist: a list of strings that detail the paths to the simulation directories [Required]
             3) datadir: a string specifying the location of the pickle file dump [Required]
             4) parse_extensions: a boolean to specify whether or not to process single state AIMD extensions [Default: False]
-            5) save_to_disk: a boolean flag for saving the individual FMS data files to disk [Default: True]
+            5) save_to_disk_ic: a boolean flag for saving the individual FMS data files to disk [Default: True]
+            6) save_to_disk_full: a boolean flag for saving one file containing the data from the full FMS simulation to disk [Default: False]
         Description:
             For each initial condition, gather TBFs and dump to disk as pickle files to make subsequent analyses faster. 
             Goes through all initial conditions given as a list of integer and processes the TBFs in a dict of FMS simulation directories (dirlist) corresponding to the integer associated with the initial condition. 
         Returns:
             1) fmsdata: a dictionary containing the dictionaries corresponding to each initial condition indexed by a four digit key corresponding to the intial condition padded with zeros, e.g., initial condition 14 is accessed by key '0014'.
             2) nstates: an int specifying the number of adiabatic states involved in the AIMS simulation. Used to write the fmsinfo file if requested. 
+            3) tbf_states: a dictionary indexed by TBF keys ('%04d-04d' %(ic, tbf_id)) reporting the adiabatic state on which the TBF lives
         """
         fmsdata = {}
+        tbf_states = {}
         for ic in initconds:
     
             data = {}
@@ -401,17 +405,25 @@ class fat(object):
                     tbf_data['tbf_state'] = spawn['tbf_state']
                     key = '%04d-%04d' %(ic, tbf_id)
                     data[key] = tbf_data
+                    tbf_states[key] = spawn['tbf_state']
                 print('Finish')
 
-            if save_to_disk:
+            if save_to_disk_ic:
                 if not os.path.isdir(datadir):
                     os.mkdir(datadir)
                 with open('%s/%04d.pickle' %(datadir, ic), 'wb') as handle:
                     pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
             fmsdata['%04d' %ic] = data
         nstates = tbf_data['nstates']
+
+        if save_to_disk_full:
+            full_data = { 'nstates' : nstates, 'fmsdata' : fmsdata, 'tbf_states' : tbf_states }
+            if not os.path.isdir(datadir):
+                os.mkdir(datadir)
+            with open('%s/full_simulation.pickle' %(datadir), 'wb') as handle:
+                pickle.dump(full_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
-        return fmsdata, nstates
+        return fmsdata, nstates, tbf_states
     
     def write_fmsinfo(self, dirlist, datadir, nstates=None, partitioned_ics=None):
         """
@@ -430,6 +442,7 @@ class fat(object):
                 - nstates: an int specifying the number of adiabatic states involved in the AIMS simulation
                 - datafiles: a list of strings specifying the path to the saved pickle files for each initial condition
                 - dirlist: a list of strings specifying the path to each FMS90 simulation directory. 
+                - tbf_states: a dictionary indexed by TBF keys ('%04d-04d' %(ic, tbf_id)) reporting the adiabatic state on which the TBF lives
         """
         fmsinfo = {}
         sim_list = glob.glob('%s/*[0-9].pickle' %datadir)
@@ -445,17 +458,19 @@ class fat(object):
             for key in ics.keys():
                 ic_list = ic_list + ics[key]
     
-        if nstates==None:
-            ic_data = pickle.load(open('./data/%04d.pickle' %ic_list[0], 'rb'))
-            key = [x for x in ic_data.keys()][0]
-            tbf_data = ic_data[key]
-            nstates = tbf_data['nstates']
+        tbf_states = {}
+        for ic, datafile in zip(ic_list, sim_list):
+            data = pickle.load(open(datafile, 'rb'))
+            for tbf_key in data.keys():
+                tbf_states[tbf_key] = data[tbf_key]['spawn_info']['tbf_state']
+        nstates = data[tbf_key]['nstates']
     
         fmsinfo['ics'] = ic_list
         fmsinfo['partitioned_ics'] = partitioned_ics
         fmsinfo['nstates'] = nstates
         fmsinfo['datafiles'] = sim_list
         fmsinfo['dirlist'] = dirlist
+        fmsinfo['tbf_states'] = tbf_states
         print('Saving fmsinfo.pickle')
         with open('%s/fmsinfo.pickle' %datadir, 'wb') as handle:
             pickle.dump(fmsinfo, handle, protocol=pickle.HIGHEST_PROTOCOL)

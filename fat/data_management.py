@@ -3,17 +3,17 @@ import numpy as np
 Data management and manipulation tools for data structures in fat.
 Authored by Jimmy K. Yu (jkyu). 
 """
-def interpolate_to_grid(grid, tsteps, data, extended=False):
+def interpolate_to_grid(grid, tsteps, data, extended=False, geometric_quantity=False):
     """
+    Description: 
+        Places the data of interest on a grid. 
+        This is necessary for the analysis for multiple AIMS simulations due to the adaptive time stepping.
+        The placement on the grid is performed by taking weighted averages (weighted by the distance from the grid point) of the raw data within grid windows centered at the grid points. 
     Arguments: 
         1) grid: a numpy array that contains all time points on the grid.
         2) tsteps: a numpy array containing the raw data time steps from the FMS simulation
         3) data: a numpy array containing the raw data for the quantity to be placed on the grid, e.g., a geometric property like bond lengths or the population
         4) extended: a boolean specifying whether to fill the empty grid points with NaN (False) or with the final value of the TBF (True).
-    Description: 
-        Places the data of interest on a grid. 
-        This is necessary for the analysis for multiple AIMS simulations due to the adaptive time stepping.
-        The placement on the grid is performed by taking weighted averages (weighted by the distance from the grid point) of the raw data within grid windows centered at the grid points. 
     Returns:
         1) grid_data: a numpy array containing the data of interest placed onto the grid. 
     """
@@ -43,11 +43,18 @@ def interpolate_to_grid(grid, tsteps, data, extended=False):
         else: 
             if extended:
                 # Grid windows in which no data exists will be assigned the value of the previous grid point
+                # This effectively means killed TBFs are included in the averaging by using the final value for all time points after the TBF has been killed. 
                 grid_data[i] = grid_data[i-1]
             else:
                 # Grid windows in which no data exists will be assigned NaN values.
-                # This makes averaging easier. 
+                # This option excludes killed TBFs from the averaging. 
                 grid_data[i] = np.nan
+
+    # For geometric properties, TBFs should be excluded from the average where they have not yet been spawned. This handles those cases. 
+    # For a population analysis, 0 population is expected for an adiabatic state before any TBFs have been spawned on it, so this should not be used. 
+    if geometric_quantity: 
+        first_ind = np.nonzero(grid_data)[0][0]
+        grid_data[:first_ind] = np.nan
 
     return grid_data
 
@@ -59,15 +66,15 @@ def exp_func(x, A, b, c):
 
 def compute_bootstrap_error(ics, grid, data):
     """
+    Description: 
+        Compute bootstrapping error for AIMS simulations over all ICs. 
+        This is a measurement of the error by sampling with replacement over the ICs included in the analysis of the data.
     Arguments:
         1) ics: an array of ints for the initial conditions
         2) grid: an array for the grid points
         3) data: an array of the data on which to perform bootstrapping
-    Description: 
-        Compute bootstrapping error for AIMS simulations over all ICs. 
-        This is a measurement of the error by sampling with replacement over the ICs included in the analysis of the data.
     Returns:
-        1) pop_errors: a numpy array of the error at each time step (grid point)
+        1) errors: a numpy array of the error at each time step (grid point)
     """
     error = np.zeros(len(grid))
     for k in range(len(grid)):

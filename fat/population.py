@@ -99,12 +99,12 @@ def compute_populations(ics, datafiles, tgrid, nstates, datadir=None, save_to_di
     population_dynamics['ic_populations'] = state_populations
     population_dynamics['errors'] = pop_errors
     population_dynamics['tbf_populations'] = interp_populations # populations for individual TBFs
-    print('Dumping interpolated amplitudes to populations.pickle')
 
     if save_to_disk:
+        print('Dumping interpolated amplitudes to %s/population_dynamics.pickle' %datadir)
         if not os.path.isdir('%s' %datadir):
             os.mkdir('%s' %datadir)
-        with open('%s/populations.pickle' %datadir, 'wb') as handle:
+        with open('%s/population_dynamics.pickle' %datadir, 'wb') as handle:
             pickle.dump(population_dynamics, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return population_dynamics
