@@ -13,7 +13,8 @@ def interpolate_to_grid(grid, tsteps, data, extended=False, geometric_quantity=F
         1) grid: a numpy array that contains all time points on the grid.
         2) tsteps: a numpy array containing the raw data time steps from the FMS simulation
         3) data: a numpy array containing the raw data for the quantity to be placed on the grid, e.g., a geometric property like bond lengths or the population
-        4) extended: a boolean specifying whether to fill the empty grid points with NaN (False) or with the final value of the TBF (True).
+        4) extended: a boolean specifying whether to fill the empty grid points after a TBF has been killed with NaN (False) or with the final value of the TBF (True).
+        5) geometric_quantity: a boolean specifying whether to fill empty grid points before a TBF has been spawned with NaN (True) or leave as zeros (False).
     Returns:
         1) grid_data: a numpy array containing the data of interest placed onto the grid. 
     """
@@ -45,10 +46,14 @@ def interpolate_to_grid(grid, tsteps, data, extended=False, geometric_quantity=F
                 # Grid windows in which no data exists will be assigned the value of the previous grid point
                 # This effectively means killed TBFs are included in the averaging by using the final value for all time points after the TBF has been killed. 
                 grid_data[i] = grid_data[i-1]
-            else:
+            elif geometric_quantity and not extended:
                 # Grid windows in which no data exists will be assigned NaN values.
-                # This option excludes killed TBFs from the averaging. 
+                # Appropriate for the case where you want to plot a TBF only where it is alive.
                 grid_data[i] = np.nan
+            else:
+                # Grid windows in which no data exists will be assigned 0 values.
+                # This is appropriate for a spectrum, where a TBF contributes 0 signal after it has died.
+                grid_data[i] = 0
 
     # For geometric properties, TBFs should be excluded from the average where they have not yet been spawned. This handles those cases. 
     # For a population analysis, 0 population is expected for an adiabatic state before any TBFs have been spawned on it, so this should not be used. 

@@ -173,7 +173,6 @@ def compute_geometric_quantities(ics, datafiles, tgrid, gq_index, start_trans=Fa
             tbf = data[tbf_key]
             time_steps = tbf['time_steps']
             trajectory = tbf['trajectory']
-            populations = tbf['populations']
 
             raw_gq_data = {}
             # Compute each of the specified geometric quantities

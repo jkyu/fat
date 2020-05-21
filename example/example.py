@@ -67,13 +67,37 @@ def example_geometric_quantities(datadir, figdir, tgrid):
     # Plot results averaged over all ICs
     plot_averaged_geometric_quantities(tgrid, averaged_gqs, errors, figdir=figdir)
 
+def example_fluorescence(datadir, figdir):
+    """
+    Example for computing fluorescence.
+    """
+    print('\n>>  Geometric quantities module <<')
+    fmsinfo = pickle.load(open('%s/fmsinfo.pickle' %datadir, 'rb'))
+    picklefiles = fmsinfo['datafiles']
+    datafiles = [ x for x in picklefiles ] 
+    ics = fmsinfo['ics']
+    nstates = fmsinfo['nstates']
+    population_dynamics = pickle.load(open('%s/population_dynamics.pickle' %datadir, 'rb'))
+    tbf_populations = population_dynamics['tbf_populations']
+
+    npoints = 51
+    tgrid = np.linspace(-40., 260., npoints)
+    wgrid = np.linspace(1240/9., 1240/2., npoints)
+
+    fluorescence = compute_fluorescence(datafiles, tgrid, wgrid, ex_state=1, datadir=datadir)
+
+    fl_grid = fluorescence['fluorescence']
+    plot_2D_fluorescence(fl_grid, wgrid, tgrid, figdir=figdir)
+
+
 if __name__=='__main__':
 
     fmsdir = './eth_data/' # Main directory containing all FMS simulations
     datadir = './fat_data/' # directory to which fat data is stored 
     figdir = './figures/' # directory to which figures are stored
     tgrid = np.arange(0, 200, 5)
-    # example_parse_data(fmsdir, datadir)
-    # example_population(datadir, figdir, tgrid)
+    example_parse_data(fmsdir, datadir)
+    example_population(datadir, figdir, tgrid)
     example_geometric_quantities(datadir, figdir, tgrid)
+    example_fluorescence(datadir, figdir)
 
