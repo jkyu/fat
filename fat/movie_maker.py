@@ -23,6 +23,7 @@ def sample_movie_trajectory(datafile, moviedir, tgrid, ic, tbf_ids):
             os.mkdir('./%s/%s/' %(moviedir, tbf_key))
         traj = tbf['trajectory']
         atoms = tbf['trajectory_atom_labels']
+        tbf_state = tbf['tbf_state']
         populations = tbf['populations']
         tsteps = tbf['time_steps']
         tsteps_sampled = np.zeros(len(tgrid))
@@ -40,7 +41,7 @@ def sample_movie_trajectory(datafile, moviedir, tgrid, ic, tbf_ids):
                 with open('./%s/%s/%04d.xyz' %(moviedir, tbf_key, t), 'w') as f:
                     f, sys.stdout = sys.stdout, f
                     print('%d' %(len(atoms)))
-                    print('')
+                    print('State: %d; Time: %f; Population: %f' %(tbf_state, tsteps[ind], populations[ind]))
                     for i, atom in enumerate(atoms):
                         print('%s %13.6f %12.6f %12.6f' \
                         %(atom, geom[i,0], geom[i,1], geom[i,2]))

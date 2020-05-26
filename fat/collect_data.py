@@ -226,13 +226,12 @@ class fat(object):
         """
         atom_labels = []
         frames_positions = []
-        with open(xyzfile, 'rb') as f:
+        with open(xyzfile, 'r') as f:
             lines = [x for x in f]
             natoms = int(lines[0])
             nframes = int(len(lines) / (natoms+2))
             for frame_idx in range(nframes):
                 coords = []
-                atom_labels = []
                 for atom_idx in range(natoms):
                     line = lines[frame_idx*(natoms+2) + atom_idx + 2]
                     line2 = line.rstrip().rsplit()
@@ -241,7 +240,7 @@ class fat(object):
                     coord.append(float(line2[2]))
                     coord.append(float(line2[3]))
                     coords.append(coord)
-                    if frame_idx==1:
+                    if frame_idx==0:
                         atom_labels.append(line2[0])
                 frames_positions.append(coords)
         frames_positions = np.array(frames_positions, np.float)
