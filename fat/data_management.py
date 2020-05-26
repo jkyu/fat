@@ -90,3 +90,10 @@ def compute_bootstrap_error(ics, grid, data):
         error[k] = std
 
     return error
+
+def get_datafile_from_ic(datadir, ic):
+    """
+    Returns the string for path to the pickle for a given initial condition.
+    """
+    datafile = datadir + '{:04d}.pickle'.format(ic)
+    return datafile

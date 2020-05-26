@@ -3,3 +3,4 @@ from .data_management import *
 from .population import *
 from .geometric_analysis import *
 from .fluorescence import *
+from .movie_maker import *
