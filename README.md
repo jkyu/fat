@@ -19,7 +19,7 @@ Optional software:
 ## Setup
 To set up, clone the repository and install FAT:
 ```
-https://github.com/jkyu/fms_analysis_tool.git
+git clone https://github.com/jkyu/fms_analysis_tool.git
 cd fms_analysis_tool
 pip install .
 ```
