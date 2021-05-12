@@ -5,7 +5,7 @@ Functionality for steady-state fluorescence not ported here yet.
 Plotting functions are included as well.
 Authored by Jimmy K. Yu (jkyu).
 """
-from fat import *
+from fat.data_management import *
 import numpy as np
 import os, pickle, sys
 import scipy.interpolate

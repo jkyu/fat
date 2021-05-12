@@ -1,4 +1,4 @@
-from fat import *
+from fat.fat import FAT
 """
 Test script for the fat module.
 Authored by jkyu.

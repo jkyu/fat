@@ -1,4 +1,4 @@
-from fat import *
+from fat.data_managment import *
 import numpy as np
 import os
 import sys

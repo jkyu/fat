@@ -5,7 +5,7 @@ The geometric quantities are placed on a uniform time grid for analysis for anal
 This information is dumped to a pickled file and saved to a data directory to be plotted.
 Authored by Jimmy K. Yu (jkyu).
 """
-from fat import *
+from fat.data_management import *
 import numpy as np
 import os, pickle, sys
 import matplotlib.pyplot as plt

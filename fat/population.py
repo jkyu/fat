@@ -4,7 +4,7 @@ The populations are placed on a uniform time grid and averaged over all AIMS sim
 This information is dumped to a pickled file and saved to a data directory to be plotted.
 Authored by Jimmy K. Yu (jkyu).
 """
-from fat import *
+from fat.data_management import *
 import numpy as np
 import os, sys, pickle
 from scipy.optimize import curve_fit

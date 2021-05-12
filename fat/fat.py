@@ -1,12 +1,12 @@
 """
-FMS90 Analysis Tool (fat) for the extraction, management and analysis of data produced by FMS90 simulations.
+FMS90 Analysis Tool (FAT) for the extraction, management and analysis of data produced by FMS90 simulations.
 Authored by Jimmy K. Yu (jkyu).
 """
 import numpy as np
 import os, sys, math, glob, pickle
 
 
-class fat(object):
+class FAT(object):
     """
     This class is a data management system for FMS90 simulations. 
     Instantiating the class object calls two functions:
@@ -344,7 +344,7 @@ class fat(object):
                     if frame_idx==0:
                         atom_labels.append(line2[0])
                 frames_positions.append(coords)
-        frames_positions = np.array(frames_positions, np.float)
+        frames_positions = np.array(frames_positions, float)
     
         return frames_positions, atom_labels
     
@@ -644,7 +644,7 @@ class fat(object):
 
 def example_ethylene():
     """
-    Example for using the fat data management system for FMS90 simulations.
+    Example for using the FAT data management system for FMS90 simulations.
     Example data will be gladly provided upon request from jkyu.
     """
     fmsdir = '../eth_data/' # Main directory containing all FMS simulations
@@ -654,7 +654,7 @@ def example_ethylene():
     for ic in ics:
         dirlist['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
     datadir = './example_data/' # directory to which FMS90 data is stored 
-    eth_fat = fat(ics, dirlist, datadir)
+    eth_fat = FAT(ics, dirlist, datadir)
 
 
 if __name__=='__main__':
