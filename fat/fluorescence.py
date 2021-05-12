@@ -1,12 +1,3 @@
-from fat import *
-import numpy as np
-import os
-import pickle
-import scipy.interpolate
-import matplotlib.pyplot as plt
-import matplotlib.colors as cl
-from matplotlib import rcParams
-import sys
 """
 Computation of time-resolved fluorescence spectra from the AIMS simulations.
 Included here are routines for computing the 2D spectra (energy and time) and the time-integrated (steady-state) fluorescence signal.
@@ -14,6 +5,15 @@ Functionality for steady-state fluorescence not ported here yet.
 Plotting functions are included as well.
 Authored by Jimmy K. Yu (jkyu).
 """
+from fat import *
+import numpy as np
+import os, pickle, sys
+import scipy.interpolate
+import matplotlib.pyplot as plt
+import matplotlib.colors as cl
+from matplotlib import rcParams
+
+
 def compute_intensity(en_gaps, populations, transition_dipoles):
     """
     Description: 

@@ -1,10 +1,3 @@
-from fat import *
-import numpy as np
-import os
-import pickle
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
-import sys
 """
 Computation of the evolution of geometric quantities over the course of the simulations.
 Included here are routines for distances, angles and dihedral angles. 
@@ -12,6 +5,13 @@ The geometric quantities are placed on a uniform time grid for analysis for anal
 This information is dumped to a pickled file and saved to a data directory to be plotted.
 Authored by Jimmy K. Yu (jkyu).
 """
+from fat import *
+import numpy as np
+import os, pickle, sys
+import matplotlib.pyplot as plt
+from matplotlib import rcParams
+
+
 def compute_distance(frame, atom_inds):
     """
     Description: 

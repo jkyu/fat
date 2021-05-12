@@ -1,22 +1,35 @@
-import numpy as np
 """
 Data management and manipulation tools for data structures in fat.
 Authored by Jimmy K. Yu (jkyu). 
 """
+import numpy as np
+
+
 def interpolate_to_grid(grid, tsteps, data, extended=False, geometric_quantity=False):
     """
-    Description: 
-        Places the data of interest on a grid. 
-        This is necessary for the analysis for multiple AIMS simulations due to the adaptive time stepping.
-        The placement on the grid is performed by taking weighted averages (weighted by the distance from the grid point) of the raw data within grid windows centered at the grid points. 
-    Arguments: 
-        1) grid: a numpy array that contains all time points on the grid.
-        2) tsteps: a numpy array containing the raw data time steps from the FMS simulation
-        3) data: a numpy array containing the raw data for the quantity to be placed on the grid, e.g., a geometric property like bond lengths or the population
-        4) extended: a boolean specifying whether to fill the empty grid points after a TBF has been killed with NaN (False) or with the final value of the TBF (True).
-        5) geometric_quantity: a boolean specifying whether to fill empty grid points before a TBF has been spawned with NaN (True) or leave as zeros (False).
-    Returns:
-        1) grid_data: a numpy array containing the data of interest placed onto the grid. 
+    Description 
+    -------------------------------------
+        - Places the data of interest on a grid. 
+        - This is necessary for the analysis for multiple AIMS simulations due to the adaptive time stepping.
+        - The placement on the grid is performed by taking weighted averages (weighted by the distance from the grid point) of the raw data within grid windows centered at the grid points. 
+
+    Arguments 
+    -------------------------------------
+        grid (np.ndarray)
+            - all time points on the grid.
+        tsteps (np.ndarray)
+            - raw time steps from the FMS simulation
+        data (np.ndarray)
+            - raw data for the quantity to be placed on the grid, e.g., a geometric property like bond lengths or the population
+        extended (bool)
+            - set True to fill the empty grid points after a TBF has been killed with NaN (False) or with the final value of the TBF (True).
+        geometric_quantity (bool)
+            - set True to fill empty grid points before a TBF has been spawned with NaN (True) or leave as zeros (False).
+
+    Returns
+    -------------------------------------
+        grid_data (np.ndarray)
+            - numpy array containing the data of interest placed onto the grid. 
     """
     grid_data = np.zeros((len(grid)))
     spacing = np.max(grid) / float(len(grid))
@@ -63,23 +76,36 @@ def interpolate_to_grid(grid, tsteps, data, extended=False, geometric_quantity=F
 
     return grid_data
 
+
 def exp_func(x, A, b, c):
     """
-    Description: Exponential function defined for exponential fits.
+    Description
+    -------------------------------------
+        - Exponential function defined for exponential fits.
     """
     return A * np.exp(-1./b * x) + c
 
+
 def compute_bootstrap_error(ics, grid, data):
     """
-    Description: 
-        Compute bootstrapping error for AIMS simulations over all ICs. 
-        This is a measurement of the error by sampling with replacement over the ICs included in the analysis of the data.
+    Description
+    -------------------------------------
+        - Compute bootstrapping error for AIMS simulations over all ICs. 
+        - This is a measurement of the error by sampling with replacement over the ICs included in the analysis of the data.
+
     Arguments:
-        1) ics: an array of ints for the initial conditions
-        2) grid: an array for the grid points
-        3) data: an array of the data on which to perform bootstrapping
+    -------------------------------------
+        ics (list(int))
+            - initial condition indices
+        grid (np.ndarray)
+            - an array for the grid points
+        data (np.ndarray)
+            - an array of the data on which to perform bootstrapping
+
     Returns:
-        1) errors: a numpy array of the error at each time step (grid point)
+    -------------------------------------
+        errors (np.ndarray)
+            - error at each time step (grid point)
     """
     error = np.zeros(len(grid))
     for k in range(len(grid)):
@@ -91,9 +117,13 @@ def compute_bootstrap_error(ics, grid, data):
 
     return error
 
+
 def get_datafile_from_ic(datadir, ic):
     """
-    Returns the string for path to the pickle for a given initial condition.
+    Description
+    -------------------------------------
+        - Returns the string for path to the pickle for a given initial condition.
     """
     datafile = datadir + '{:04d}.pickle'.format(ic)
     return datafile
+

@@ -1,60 +1,98 @@
-import glob
-import pickle
-import numpy as np
-import os
-import sys
-import math
 """
 FMS90 Analysis Tool (fat) for the extraction, management and analysis of data produced by FMS90 simulations.
 Authored by Jimmy K. Yu (jkyu).
 """
+import numpy as np
+import os, sys, math, glob, pickle
+
+
 class fat(object):
     """
     This class is a data management system for FMS90 simulations. 
-    Build an instance by providing the following arguments:
-        1) ics: a list of integers that index the initial conditions [Required]
-        2) dirlist: a list of strings that detail the paths to the simulation directories [Required]
-        3) datadir: a string specifying the location of the pickle file dump [Default: ./data/]
-        4) partitioned_ics: a dictionary containing a user-specified partitioning of the ICs. This is not required and has a niche use case. [Default: None]
-        5) parse_extensions: a boolean to specify whether or not to process single state AIMD extensions [Default: False]
-        6) save_to_disk_ic: a boolean flag for saving the individual FMS data files to disk [Default: True]
-        7) save_to_disk_full: a boolean flag for saving one file containing the data for the full FMS simulation to disk [Default: False]
-    Initiating the object also calls two functions:
-        collect_tbfs() parses data from the FMS outputs for each independent AIMS simulation
-        write_fmsinfo() provides parameters for the full AIMS simulation
-    If the data is not dumped to disk by initial condition, it can be accessed directly within the fmsdata variable of the object or by saving the full FMS simulation. 
-    This is OK if the system is small and the simulation is short, e.g., ethylene.
-    By default, one pickle file is for each FMS simulation is saved to disk because the data processes is incredibly slow when systems are large, e.g, proteins.
-    Because these pickle files are stored separately, the data for the full simulation does not need to be processed in one go and updates to a single simulation do not require rerunning the data collection procedure. 
-    fmsdata is a dictionary of the individual AIMS simulations indexed by the initial condition number. 
+    Instantiating the class object calls two functions:
+        - collect_tbfs() parses data from the FMS outputs for each independent AIMS simulation
+        - write_fmsinfo() provides parameters for the full AIMS simulation
+
+    Arguments
+    -------------------------------------
+        ics (list(int))
+            - list of integers that index the initial conditions (ics) [Required]
+        dirlist (list(str))
+            - list of paths to the simulation directories [Required]
+        datadir (str)
+            - path to the pickle file to dump [Default: ./data/]
+        partitioned_ics (dict)
+            - dictionary containing a user-specified partitioning of the ICs. 
+            - not required and has a niche use case. [Default: None]
+        parse_extensions (bool)
+            - set to True to process single state AIMD extensions [Default: False]
+        save_to_disk_ic (bool)
+            - set to True to save the individual FMS data files to disk [Default: False]
+        save_to_disk_full (bool)
+            - set to True to save a single file containing the data for the full FMS simulation to disk [Default: False]
+
+    Special Notes
+    -------------------------------------
+        - If the data is not dumped to disk by initial condition, it can be accessed directly within the fmsdata variable of the object or by saving the full FMS simulation. 
+        - This is OK if the system is small and the simulation is short, e.g., ethylene.
+        - By default, one pickle file is for each FMS simulation is saved to disk because the data processing is incredibly slow when systems are large, e.g, proteins.
+        - Because these pickle files are stored separately, the data for the full simulation does not need to be processed in one go and updates to a single simulation do not require rerunning the data collection procedure. 
+        - fmsdata is a dictionary of the individual AIMS simulations indexed by the initial condition number. 
     """
-    def __init__(self, ics, dirlist, datadir='./data/', partitioned_ics=None, parse_extensions=False, save_to_disk_ic=True, save_to_disk_full=False):
+    def __init__(
+            self, 
+            ics, 
+            dirlist, 
+            datadir='./data/',
+            partitioned_ics=None, 
+            parse_extensions=False, 
+            save_to_disk_ic=False, 
+            save_to_disk_full=False
+            ):
 
         self.ics = ics
         self.dirlist = dirlist
         self.parse_extensions = parse_extensions
 
-        self.fmsdata, self.nstates, self.tbf_states = self.collect_tbfs(self.ics, self.dirlist, datadir, self.parse_extensions, save_to_disk_ic, save_to_disk_full)
+        self.fmsdata, self.nstates, self.tbf_states = self.collect_tbfs(
+                ics, 
+                dirlist, 
+                datadir, 
+                parse_extensions, 
+                save_to_disk_ic, 
+                save_to_disk_full
+                )
+
         if save_to_disk_ic: 
             self.fmsinfo = self.write_fmsinfo(self.dirlist, datadir, self.nstates, partitioned_ics)
 
+
     def get_populations(self, popfile):
         """
-        Arguments: 
-            1) popfile: a string that provides the path to an Amp.x file written by FMS90 for the TBF.
-        Description: 
-            Parse Amp.x file to pull out population information over time for the trajectory. 
-            For the population information, the amplitude norm (in the second column of Amp.x) is recorded.
-            This information is collected from Amp.x instead of N.dat because the coefficient for each TBF at each time step matters for computing observables.
-            For the analysis of population decay, N.dat alone is sufficient, but this is more flexible.
-        Returns: 
-            1) time_steps_au: a numpy array containing the FMS time steps in atomic units
-            2) amplitudes: a numpy array containing the amplitude of the TBF at each time step. 
+        Description 
+        -------------------------------------
+            - Parse Amp.x file to pull out population information over time for the trajectory. 
+            - For the population information, the amplitude norm (in the second column of Amp.x) is recorded.
+            - This information is collected from Amp.x instead of N.dat because the coefficient for each TBF at each time step matters for computing observables.
+            - For the analysis of population decay, N.dat alone is sufficient, but this is more flexible.
+
+        Arguments
+        -------------------------------------
+            popfile (str)
+                - path to an Amp.x file written by FMS90 for TBF #x
+
+        Returns 
+        -------------------------------------
+            time_steps_au (np.ndarray)
+                - numpy array containing the FMS time steps in atomic units
+            amplitudes (np.ndarray)
+                - numpy array containing the amplitude of the TBF at each time step. 
         """
         time_steps_au = []
         amplitudes = []
+
         with open(popfile, 'rb') as f:
-            _ = f.readline() # header line to get rid of
+            _ = f.readline() # remove header line
             for line in f: 
                 a = line.split()
                 time_step_au = float(a[0])
@@ -67,26 +105,40 @@ class fat(object):
     
         return time_steps_au, amplitudes 
     
+
     def get_energies(self, enfile):
         """
-        Arguments: 
-            1) enfile: a string that provides the path to an PotEn.x file written by FMS90 for the TBF.
-        Description:
-            Parse PotEn.x file to pull out electronic energies over time computed at the center of the TBF. 
-            The electronic energy on each adiabatic state is collected for each TBF at each time step. 
-            Time is collected from column 1 and the Sn energies (where n = 1-indexed state number) are in the following columns.
-            The final column is the total energy, which should stay approximately constant throughout the FMS simulation. 
-            These energies are recorded in atomic units. 
-        Returns: 
-            1) time_steps_au: a numpy array containing the FMS time steps in atomic units
-            2) data: a dictionary containing arrays of energies for an adiabatic state during the course of the simulation indexed by the adiabatic state label, e.g. 's0' or 's1'.
-            3) nstates: an integer that specifies the number of states included in the FMS simulation. 
+        Description
+        -------------------------------------
+            - Parse PotEn.x file fir electronic energies over time computed at the center of TBF #x.
+            - The electronic energy on each adiabatic state is collected for each TBF at each time step. 
+            - Time is collected from column 1 and the S_n energies (where n = 1-indexed state number) are in the following columns.
+            - The final column is the total energy, which should stay approximately constant throughout the FMS simulation. 
+            - These energies are recorded in atomic units. 
+
+        Arguments
+        -------------------------------------
+            enfile (str)
+                - path to PotEn.x file written by FMS90 for TBF #x
+
+        Returns 
+        -------------------------------------
+            time_steps_au (np.ndarray)
+                - numpy array containing the FMS time steps in atomic units
+            data (dict)
+                - dictionary containing arrays of energies for an adiabatic 
+                  state during the course of the simulation indexed by the 
+                  adiabatic state label, e.g. 's_0' or 's_1'.
+            nstates (int)
+                - integer specifying the number of electronic states included
+                  in the FMS simulation
         """
         time_steps_au  = []
         e_class = []
         energies = {}
+
         with open(enfile, 'rb') as f:
-            header = f.readline() # header line
+            header = f.readline() # remove header line
             nstates = int(len(header.split()) - 2)
             for i in range(0, nstates):
                 energies['s%d' %i] = []
@@ -97,6 +149,7 @@ class fat(object):
                 e_class.append(float(a[-1]))
                 for i in range(0, nstates):
                     energies['s%d' %i].append(float(a[i+1]))
+
         data = {}
         for key in energies.keys():
             data[key] = np.array(energies[key])
@@ -105,26 +158,35 @@ class fat(object):
     
         return time_steps_au, data, nstates
     
+
     def get_transition_dipoles(self, tdipfile, nstates):
         """
-        Arguments: 
-            1) tdipfile: a string that provides the path to an TDip.x file written by FMS90 for the TBF.
-            2) nstates: an integer specifying the number of states included in the FMS simulation. 
-        Description:
-            Parse TDip.x file to pull out transition dipoles between S0 and Sn for each time step (where n>1 indexes the adiabatic excited states). 
-            The time step is in the first column and the magnitude of the transition dipole from S0 to Sn is in the nth column (labeled Mag.n). 
-            Columns labeled n.x, n.y, n.z the xyz components of the S0->Sn transition dipole. 
-            For the purpose of computing a fluorescence spectrum, only the magnitude is required. 
-        Returns:
-            1) time_steps_au: a numpy array containing the FMS time steps in atomic units
-            2) data: a dictionary containing arrays of transition dipoles from S0->Sn during the course of the simulation indexed by the adiabatic state label of the excited state, e.g., 's1', 's2', etc. 
+        Description
+        -------------------------------------
+            - Parse TDip.x file to pull out transition dipoles between S_0 and S_n for each time step (where n>1 indexes the adiabatic excited states). 
+            - The time step is in the first column and the magnitude of the transition dipole from S_0 to S_n is in the nth column (labeled Mag.n). 
+            - Columns labeled n.x, n.y, n.z the xyz components of the S_0->S_n transition dipole. 
+            - For the purpose of computing a fluorescence spectrum, only the magnitude is required. 
+
+        Arguments
+        -------------------------------------
+            tdipfile (str)
+                - path to TDip.xfile written by FMS90 for TBF #x
+            nstates (int)
+                - integer specifying the number of electronic states 
+                  included in the FMS simulation
+        Returns 
+        -------------------------------------
+            time_steps_au (np.ndarray)
+                - numpy array containing the FMS time steps in atomic units
+            data (dict)
+                - dictionary containing arrays of transition dipoles from S_0->S_n during the course of the simulation indexed by the adiabatic state label of the excited state, e.g., 's_1', 's_2', etc. 
         """
         time_steps_au = []
         transition_dipoles = {}
+
         with open(tdipfile, 'rb') as f:
-            _ = f.readline() # header line to get rid of
-            # header = f.readline() # header line
-            # nstates = int((len(header.split()) - 1)//4)
+            _ = f.readline() # remove header line
             for i in range(1, nstates):
                 transition_dipoles['s%d' %i] = []
             for line in f:
@@ -132,33 +194,53 @@ class fat(object):
                 time_steps_au.append(float(a[0]))
                 for i in range(1, nstates):
                     transition_dipoles['s%d' %i].append(float(a[i]))
+
         data = {}
         for key in transition_dipoles.keys():
             data[key] = np.array(transition_dipoles[key])
         time_steps_au = np.array(time_steps_au)
     
         return time_steps_au, data
+
     
     def get_spawn_info(self, dirname, ic, initstate):
         """
-        Arguments: 
-            1) dirname: a string the provides the path to the directory of the individual AIMS simulation.
-            2) ic: an integer that indicates the initial condition of the AIMS simulation.
-            3) initstate: an integer that indicates the adiabatic state on which the AIMS simulation starts. 
-        Description:
-            Parse Spawn.log to obtain information about the spawning throughout the AIMS simulation. 
-            A special case is created for the initial TBF (not detailed by Spawn.log) and for simulations for which no spawning occurs.
-        Returns:
-            1) spawns: a list containing a dictionaries of the spawn information for each child TBF.
-            Each spawn dictionary contains the following elements:
-                - spawn_time: a float that indicates the spawn time of the TBF in units of fs
-                - spawn_time_au: a float that indicates the spawn time of the TBF in atomic units
-                - tbf_id: an int that indexes the TBF, i.e., the int in Amp.x, positions.x.xyz, etc.
-                - tbf_state: an int that indicates the adiabatic state of the TBF (zero-indexed), i.e. 0 = S0, 1 = S1
-                - parent_id: an int that indexes the tbf_id of the parent TBF (from which the current TBF spawned)
-                - parent_state: an int that indicates the adiabatic state of the parent TBF (zero-indexed)
-                - initcond: an int that indicates the initial condition number of the AIMS simulation of which this TBF is part
-                - population_transferred: a float indicating the population that remains on this TBF by the end of the simulation (or at the time of TBF death)
+        Description
+        -------------------------------------
+            - Parse Spawn.log to obtain information about the spawning throughout the AIMS simulation. 
+            - A special case is created for the initial TBF (not detailed by Spawn.log) and for simulations in which no spawning occurs.
+
+        Arguments 
+        -------------------------------------
+            dirname (str)
+                - path to the directory of the AIMS simulation
+            ic (int)
+                - index of the initial condition that launched the AIMS simulation
+            initstate (int)
+                - the adiabatic state on which the AIMS simulation starts
+
+        Returns
+        -------------------------------------
+            spawns (list(dict))
+                - a list containing a dictionaries of the spawn information for each child TBF.
+            Each spawn dictionary is indexed by the following keys:
+                spawn_time (float)
+                    - spawn time of the TBF in units of fs
+                spawn_time_au (float)
+                    - a float that indicates the spawn time of the TBF in atomic units
+                tbf_id (int)
+                    - index of the TBF, i.e., the int x in Amp.x, positions.x.xyz, etc.
+                tbf_state (int)
+                    - adiabatic state of the TBF (zero-indexed), i.e. 0 = S0, 1 = S1
+                parent_id (int)
+                    - tbf_id of the parent TBF (from which the current TBF spawned)
+                parent_state (int)
+                    - adiabatic state of the parent TBF (zero-indexed)
+                initcond (int)
+                    - index of the initial condition that launched the AIMS simulation
+                population_transferred (float)
+                    - population that remains on this TBF by the end of the simulation 
+                      or at the time of TBF death
         """
         spawns = []
         # Special case for the initial TBF 
@@ -172,6 +254,7 @@ class fat(object):
         spawn['initcond']      = ic
         spawn['population_transferred'] = None
         spawns.append(spawn)
+
         # Iterate through spawned TBFs
         if os.path.isfile(dirname + 'Spawn.log'):
             with open(dirname + 'Spawn.log', 'rb') as f:
@@ -190,20 +273,29 @@ class fat(object):
                     spawns.append(spawn)
     
         return spawns
+
     
     def get_population_transfer(self, dirname, spawn_id):
         """
-        Arguments: 
-            1) dirname: a string the provides the path to the directory of the individual AIMS simulation.
-            2) spawn_id: an integer that indexes the TBF of interest
-        Description:
-            Obtain the final population remaining on the TBF by the end of the AIMS simulation (or when the TBF dies)
-        Returns:
-            1) a float indicating the final amplitude of the TBF
+        Description
+        -------------------------------------
+            - Obtain the final population remaining on the TBF by the end of the AIMS simulation (or when the TBF dies)
+        Arguments
+        -------------------------------------
+            dirname (str)
+                - path to the directory of the AIMS simulation
+            spawn_id (int)
+                - index for the TBF of interest
+
+        Returns
+        -------------------------------------
+            (float)
+                - final amplitude of the TBF
         """
         a = 0
         if not os.path.isfile(dirname+'Amp.%d' %spawn_id):
             return a
+
         with open(dirname + 'Amp.%d' %(spawn_id), 'rb') as f:
             f.seek(-2, os.SEEK_END)     # Jump to second to last byte in file
             while f.read(1) != b'\n':   # Until EOL for previous line is found,
@@ -212,17 +304,26 @@ class fat(object):
             a = list(map(float, last.split()))
     
         return a[1]
+
     
     def get_positions(self, xyzfile):
         """
-        Arguments: 
-            1) xyzfile: a string the provides the path to an xyz file for the TBF.
-        Description:
-            Obtain the coordinates for the dynamics for a TBF of the AIMS simulation. 
-            This is also used to parse the coordinates for the AIMD extensions of an AIMS simulation.
-        Returns:
-            1) frame_positions: a list of numpy arrays containing the coordinates for each time step. 
-            2) atom_labels: a list containing the atom labels for a single frame. 
+        Description
+        -------------------------------------
+            - Obtain the coordinates detailing the dynamics of a single TBF 
+            - This is also used to parse the coordinates for the AIMD extensions
+
+        Arguments
+        -------------------------------------
+            xyzfile (str)
+                - path to .xyz file that tracks the TBF history
+
+        Returns
+        -------------------------------------
+            frame_positions (list(np.ndarray))
+                - list of numpy arrays containing the coordinates at each time step
+            atom_labels (list(str))
+                - list containing the atom labels (element symbols) for the system at each frame
         """
         atom_labels = []
         frames_positions = []
@@ -247,15 +348,19 @@ class fat(object):
     
         return frames_positions, atom_labels
     
+
     def get_initstate(self, dirname):
         """
         Arguments: 
+        -------------------------------------
             1) dirname: a string the provides the path to the directory of the individual AIMS simulation.
         Description:
+        -------------------------------------
             Obtains the initial adiabatic state for the AIMS simulation. 
             Since this is collected for each AIMS simulation separately, this can be used for simulations
             in which not all ICs are initiated on the same adiabatic state. 
         Returns:
+        -------------------------------------
             1) initstate: an int corresponding to the adiabatic state label (0-indexed), i.e. s0, s1, etc.
         """
         initstate = None
@@ -271,15 +376,24 @@ class fat(object):
     
     def get_extension(self, extdir, tstep=0.5):
         """
-        Arguments: 
-            1) extdir: a string the provides the path to the directory of the AIMD extension for the TBF.
-            2) tstep: a float providing the step size used for the AIMD simulation. [default = 0.5 fs, the TeraChem default]
         Description:
-            Read in coordinate information from AIMD extensions for ground state AIMS TBFs.
-            The time grid associated with the extension is comuted from a time step and the number of frames in the extension trajectory. 
+        -------------------------------------
+            - Read in coordinate information from AIMD extensions for ground state AIMS TBFs.
+            - The time grid associated with the extension is comuted from a time step and the number of frames in the extension trajectory. 
+
+        Arguments: 
+        -------------------------------------
+            extdir (str)
+                - path to the directory of the AIMD extension for the TBF
+            tstep (float)
+                - the step size used for the AIMD simulation. [default = 0.5 fs, the TeraChem default]
+
         Returns:
-            1) tgrid: a numpy array containing the time steps of the AIMD extension in units of fs.
-            2) trajecotry_ext: a list of numpy arrays containing the coordinates for each time step of the AIMD extension.
+        -------------------------------------
+            tgrid (np.ndarray)
+                - numpy array containing the time steps of the AIMD extension in units of fs.
+            trajecotry_ext (list(np.ndarray))
+                - list of numpy arrays containing the coordinates for each time step of the AIMD extension.
         """
         xyzfile = extdir + 'scr.coord/coors.xyz'
         trajectory_ext, _ = self.get_positions(xyzfile)
@@ -288,36 +402,59 @@ class fat(object):
         tgrid = np.array([x*tstep for x in range(len(trajectory_ext))])
     
         return tgrid, trajectory_ext
+
     
     def get_tbf_data(self, dirname, ic, tbf_id, parse_extensions=False):
         """
+        Description
+        -------------------------------------
+            - Collect relevant data for each TBF by calling helper functions within the class. 
+
         Arguments: 
-            1) dirname: a string the provides the path to the FMS90 directory for the initial condition. 
-            2) ic: an int indicating the initial condition of the AIMS simulation.
-            3) tbf_id: an int specifying the index of the TBF
-            4) parse_extensions: a boolean flag for whether or not to process AIMD extensions. [Default: False]
-            5) tstep: a float providing the step size used for the AIMD simulation. [Default: 0.5 fs, the TeraChem default]
-        Description:
-            Collect relevant data for each TBF by calling helper functions within the class. 
-            Note for AIMD extensions if requested:
-            The coordinates and time steps for the extension trajectory are appended to the corresponding arrays from the FMS TBFs. 
-            The population at the last time point in the FMS TBF is taken to be constant for the entire AIMD extension trajectory and the populations array is extended with this constant value to be the same length as the extended time and position arrays. 
-            The energies and transition dipole arrays are not handled here because those are only used in fluorescence calculations, where only excited states are relevant. 
-            They don't break anything, since there will not be array length mismatches when only excited states are considered. 
-            If this is a problem later for whatever reason, this should be sufficient information to fix this. 
+        -------------------------------------
+            dirname (str)
+                - path to the FMS90 directory for the initial condition. 
+            ic (int)
+                - initial condition of the AIMS simulation.
+            tbf_id (int)
+                - index of the TBF of interest
+            parse_extensions (bool)
+                - set to True to process AIMD extensions. [Default: False]
+
         Returns:
-            1) tbf_data: a dictionary containing key quantities for each TBF.
-            Each tbf_data dictionary contains the following elements:
-                - initcond: an int indicating the initial condition of the AIMS simulation.
-                - tbf_id: an int that indexes the TBF, i.e., the int in Amp.x, positions.x.xyz, etc.
-                - energies: a dictionary containing arrays of energies for an adiabatic state during the course of the simulation indexed by the adiabatic state label, e.g. 's0' or 's1'.
-                - nstates: an integer that specifies the number of states included in the FMS simulation. 
-                - trajectory: a list of numpy arrays containing the coordinates for each time step
-                - time_steps: a numpy array containing the FMS time steps in units of fs
-                - time_steps_au: a numpy array containing the FMS time steps in atomic units
-                - populations:  a numpy array containing the amplitude of the TBF at each time step. 
-                - transition_dipoles:: a dictionary containing arrays of transition dipoles from S0->Sn during the course of the simulation indexed by the adiabatic state label of the excited state, e.g., 's1', 's2', etc. 
-                - trajectory_atom_labels: list of atom labels for one frame
+        -------------------------------------
+            tbf_data (dict)
+                - a dictionary containing key quantities for each TBF.
+                Each tbf_data dictionary contains the following elements:
+                    initcond (int)
+                        - initial condition of the AIMS simulation.
+                    tbf_id (int)
+                        - TBF index, i.e., the int in Amp.x, positions.x.xyz, etc.
+                    energies (dict)
+                        - dictionary containing arrays of energies for an adiabatic state during the course of the simulation indexed by the adiabatic state label, e.g. 's0' or 's1'.
+                    nstates (int)
+                        - number of states included in the FMS simulation. 
+                    trajectory (list(np.ndarray))
+                        - list of numpy arrays containing the coordinates for each time step
+                    time_steps (np.ndarray)
+                        - numpy array containing the FMS time steps in units of fs
+                    time_steps_au (np.ndarray)
+                        - numpy array containing the FMS time steps in atomic units
+                    populations (np.ndarray)
+                        - numpy array containing the amplitude of the TBF at each time step. 
+                    transition_dipoles (dict)
+                        - dictionary containing arrays of transition dipoles from S0->Sn during the course of the simulation indexed by the adiabatic state label of the excited state, e.g., 's1', 's2', etc. 
+                    trajectory_atom_labels (list(str))
+                        - list of atom labels for each coordinate frame
+
+        Special Notes 
+        -------------------------------------
+            - If AIMD extensions are requested:
+                - The coordinates and time steps for the extension trajectory are appended to the corresponding arrays from the FMS TBFs. 
+                - The population at the last time point in the FMS TBF is taken to be constant for the entire AIMD extension trajectory and the populations array is extended with this constant value to be the same length as the extended time and position arrays. 
+                - The energies and transition dipole arrays are not handled here because those are only used in fluorescence calculations, where only excited states are relevant. 
+                - They don't break anything, since there will not be array length mismatches when only excited states are considered. 
+                - If this is a problem later for whatever reason, this should be sufficient information to fix this. 
         """
         enfile   = dirname + 'PotEn.%d' %tbf_id
         xyzfile  = dirname + 'positions.%d.xyz' %tbf_id
@@ -366,22 +503,37 @@ class fat(object):
     
         return tbf_data
     
-    def collect_tbfs(self, initconds, dirlist, datadir, parse_extensions=False, save_to_disk_ic=True, save_to_disk_full=False):
+
+    def collect_tbfs(self, initconds, dirlist, datadir, parse_extensions=False, save_to_disk_ic=False, save_to_disk_full=False):
         """
-        Arguments: 
-            1) initconds: a list of integers that index the initial conditions [Required]
-            2) dirlist: a list of strings that detail the paths to the simulation directories [Required]
-            3) datadir: a string specifying the location of the pickle file dump [Required]
-            4) parse_extensions: a boolean to specify whether or not to process single state AIMD extensions [Default: False]
-            5) save_to_disk_ic: a boolean flag for saving the individual FMS data files to disk [Default: True]
-            6) save_to_disk_full: a boolean flag for saving one file containing the data from the full FMS simulation to disk [Default: False]
-        Description:
-            For each initial condition, gather TBFs and dump to disk as pickle files to make subsequent analyses faster. 
-            Goes through all initial conditions given as a list of integer and processes the TBFs in a dict of FMS simulation directories (dirlist) corresponding to the integer associated with the initial condition. 
-        Returns:
-            1) fmsdata: a dictionary containing the dictionaries corresponding to each initial condition indexed by a four digit key corresponding to the intial condition padded with zeros, e.g., initial condition 14 is accessed by key '0014'.
-            2) nstates: an int specifying the number of adiabatic states involved in the AIMS simulation. Used to write the fmsinfo file if requested. 
-            3) tbf_states: a dictionary indexed by TBF keys ('%04d-04d' %(ic, tbf_id)) reporting the adiabatic state on which the TBF lives
+        Description
+        -------------------------------------
+            - For each initial condition, gather TBFs and dump to disk as pickle files to make subsequent analyses faster. 
+            - Goes through all initial conditions given as a list of integer and processes the TBFs in a dict of FMS simulation directories (dirlist) corresponding to the integer associated with the initial condition. 
+
+        Arguments 
+        -------------------------------------
+            initconds (list(int))
+                - list of initial condition indices [Required]
+            dirlist (list(str))
+                - list of simulation directory paths [Required]
+            datadir (str)
+                - location of the pickle file to dump [Required]
+            parse_extensions (bool)
+                - set True to process single state AIMD extensions [Default: False]
+            save_to_disk_ic (bool)
+                - set True to save individual FMS data files to disk for each initial condition [Default: False]
+            save_to_disk_full (bool)
+                - set True to save one file containing the data from the full FMS simulation to disk [Default: False]
+        Returns
+        -------------------------------------
+            fmsdata (dict)
+                - dictionary containing the dictionaries corresponding to each initial condition indexed by a four digit key corresponding to the intial condition padded with zeros, e.g., initial condition 14 is accessed by key '0014'.
+            nstates (int)
+                - number of adiabatic states involved in the AIMS simulation. 
+                  Used to write the fmsinfo file if requested. 
+            tbf_states (dict)
+                - dictionary indexed by TBF keys ('%04d-04d' %(ic, tbf_id)) reporting the adiabatic state on which the TBF lives
         """
         fmsdata = {}
         tbf_states = {}
@@ -424,18 +576,31 @@ class fat(object):
     
         return fmsdata, nstates, tbf_states
     
+
     def write_fmsinfo(self, dirlist, datadir, nstates=None, partitioned_ics=None):
         """
-        Arguments: 
-            1) dirlist: a list of strings that detail the paths to the simulation directories
-            2) datadir: a string specifying the location of the pickle file dump
-            3) nstates: an int specifying the number of adiabatic states involved in the AIMS simulation.
-            4) partitioned_ics: a dictionary specifying the partitioning of initial conditions
         Description:
-            Writes fmsinfo.pickle to disk. fmsinfo contains some helpful information regarding the overall simulation to help with some analyses where loading an entire simulation dataset may be too expensive. 
-            Allows for saving a partitioning of the initial conditions if this is required for some reason. 
+        -------------------------------------
+            - Writes fmsinfo.pickle to disk. 
+            - fmsinfo contains some helpful information regarding the overall simulation to help with some analyses where loading an entire simulation dataset may be too expensive. 
+            - Allows for saving a partitioning of the initial conditions if this is required for some reason. 
+
+        Arguments: 
+        -------------------------------------
+            dirlist (list(str)
+                - list of simulation directory paths
+            datadir (str)
+                - location of the pickle file to dump
+            nstates (int)
+                - number of adiabatic states involved in the AIMS simulation.
+            partitioned_ics (dict)
+                - dictionary specifying the partitioning of initial conditions
+                  niche use cases
+
         Returns:
-            1) fmsinfo: a dictionary containing the following elements
+        -------------------------------------
+            fmsinfo (dict)
+            - a dictionary containing the following elements:
                 - ics: a full list of the initial conditions as ints ignoring user-specified partitioning of the ICs
                 - partitioned_ics: a user-specified partitioning of the ICs in dictionary form
                 - nstates: an int specifying the number of adiabatic states involved in the AIMS simulation
@@ -476,10 +641,11 @@ class fat(object):
 
         return fmsinfo
 
+
 def example_ethylene():
     """
     Example for using the fat data management system for FMS90 simulations.
-    Request example data from jkyu. At present, the example data has not been published, so will not be made publicly available.
+    Example data will be gladly provided upon request from jkyu.
     """
     fmsdir = '../eth_data/' # Main directory containing all FMS simulations
     ic_dict = {}
@@ -488,7 +654,8 @@ def example_ethylene():
     for ic in ics:
         dirlist['%d' %ic] = fmsdir + ('%04d/' %ic) # index of paths to all individual FMS simulations
     datadir = './example_data/' # directory to which FMS90 data is stored 
-    eth_fat = fat(ics, dirlist, datadir, parse_extensions=False, save_to_disk=True)
+    eth_fat = fat(ics, dirlist, datadir)
+
 
 if __name__=='__main__':
 

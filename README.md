@@ -1,6 +1,7 @@
-# FMS90 Analysis Tool (fat)
+# FMS90 Analysis Tool (FAT)
+
 - For the extraction, management and analysis of data produced by FMS90 simulations.
-- Authored by Jimmy K. Yu (jkyu).
+- Authored by Jimmy K. Yu (jkyu@stanford.edu).
 
 Data management and analysis tool for FMS90 dynamics simulations. 
 This tool handles the extraction of raw data from FMS90 simulations and facilitates the computation of observable properties. 

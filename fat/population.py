@@ -1,17 +1,17 @@
-from fat import *
-import numpy as np
-import os
-from scipy.optimize import curve_fit
-import pickle
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
-import sys
 """
 Computation of the population dynamics for all electronic states.
 The populations are placed on a uniform time grid and averaged over all AIMS simulations.
 This information is dumped to a pickled file and saved to a data directory to be plotted.
 Authored by Jimmy K. Yu (jkyu).
 """
+from fat import *
+import numpy as np
+import os, sys, pickle
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+from matplotlib import rcParams
+
+
 def compute_populations(ics, datafiles, tgrid, nstates, datadir=None, save_to_disk=True):
     """
     Arguments: 
